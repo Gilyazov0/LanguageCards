@@ -1,0 +1,9 @@
+ 
+.game-control{width: 30%;}
+
+.game-card{width: 90%;}
+.game-control-bar{
+    width: 90%;
+    display: flex;
+    justify-content: space-between;
+}

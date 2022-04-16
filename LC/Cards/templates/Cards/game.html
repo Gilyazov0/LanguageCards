@@ -1,20 +1,20 @@
 {% extends 'Cards/layout.html' %}
+{% load static %}
 {% block script %}  
-    <script src="..\LC\Cards\static\Cards\game.js"> </script>
+    <script src="{% static 'Cards/script/game.js' %}"> </script>
     <!-- импорт для вставки иконок -->
-    
+    <link href="{% static 'Cards/css/style.css' %}" rel="stylesheet">  
+    <link href="{% static 'Cards/css/bootstrap-icons.css' %}" rel="stylesheet">  
 {% endblock %}
 {% block title %} Game {% endblock %}
 {% block content %}
 <div id = 'current_card'></div>
-
-<button class="btn btn-primary" > <i class="bi bi-arrow-left-square"></i></button>
-<button class="btn btn-primary" >Login</button>
-<button class="btn btn-primary" >Login</button>
-
-
-
-
+<div class = "game-control-bar">    
+<button class="btn btn-primary game-control" ><h1><i class="bi bi-arrow-left"></i> </h1></button>
+<button class="btn btn-primary game-control" ><h1><i class="bi bi-arrow-repeat"></i></h1></button>
+<button class="btn btn-primary game-control" ><h1><i class="bi bi-arrow-right"></i></h1></button>
+ 
+</div>
 {% endblock %}
 
  

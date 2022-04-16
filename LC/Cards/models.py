@@ -18,7 +18,7 @@ class Card(models.Model):
         return super().save(*args, **kwargs) 
 
     def serialize(self):
-        result = {'id', self.id} 
+        result = {'id':self.id} 
 
         tags_ = []
         for tag in self.tags.all():

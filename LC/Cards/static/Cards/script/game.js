@@ -1,11 +1,8 @@
-
 var game
-
-
 
 //Игровая карта. Хранит данные карты в виде сырых данных JSON
 class Card {
-    constructor(card_data,front,back,card_set = null,show_tags = true,container = null) {
+    constructor(card_data, front, back, card_set = null, show_tags = true, container = null) {
         this.card_data = card_data;
         this.front = front;
         this.back = back;
@@ -14,53 +11,63 @@ class Card {
         this.container = container;
     }
     get_id() {
-        return this.card_data.id; 
+        return this.card_data.id;
     }
 
-    show (is_front_side) {
+    show(is_front_side) {
         if (this.container != null) {
-            this.container.innerHTML = this.getHTML(is_front_side);    
-        }
-    }            
+            /*let element = document.createElement('div');
+            element.innerHTML = this.getHTML(is_front_side);
+            this.container.insertBefore(element,this.container.firstChild);*/
+            this.container.innerHTML = this.getHTML(is_front_side);
+            }
+    }
 
-    getHTML(front = true ) {
+    getHTML(front = true) {
 
-        let attributes = (front) ? this.front : this.back;
-        let show_tags = (front) ? false : this.show_tags;
-        let tags = this.card_data.tags;
-        
-        var header = '';
-        if (this.card_set != null) {
-                header = (this.card_set.get_card_number(this)+1)+'/'+this.card_set.cards_count()
+        let result =`<div id="card-holder${this.get_id()}" style ="text-align:center">`;
+
+        const sides = [front, !front]
+        for (let i = 0; i < sides.length; i++) {
+           
+            let attributes = (sides[i]) ? this.front : this.back;
+            let show_tags = (sides[i]) ? false : this.show_tags;
+            let tags = this.card_data.tags;
+
+            var header = '';
+            if (this.card_set != null) {
+                header = (this.card_set.get_card_number(this) + 1) + '/' + this.card_set.cards_count()
             }
 
-        var body = '';
+            var body = '';
 
-        for (let i=0; i< attributes.length;i++) {
-            const FA = this.card_data.FAs[attributes[i]]
-            if (FA != undefined){
-                body +=  `<h5 class="card-title ">${this.card_data.FAs[attributes[i]]}</h5> \n`;
-                //<p class="card-text">Some quick example text to build on the card title and make up the bulk of the card's content.</p>
+            for (let i = 0; i < attributes.length; i++) {
+                const FA = this.card_data.FAs[attributes[i]]
+                if (FA != undefined) {
+                    body += `<h5 class="card-title ">${this.card_data.FAs[attributes[i]]}</h5> \n`;
+                    //<p class="card-text">Some quick example text to build on the card title and make up the bulk of the card's content.</p>
 
-            }              
-        }
-
-        var footer =''
-        if (show_tags){
-            for (let i=0; i< tags.length;i++) {
-                footer +='<' + tags[i] + '>';
+                }
             }
-        }
 
-        return `
-        <div class="card border-success mb-3 game-card">
+            var footer = ''
+            if (show_tags) {
+                for (let i = 0; i < tags.length; i++) {
+                    footer += '<' + tags[i] + '>';
+                }
+            }
+
+            result +=`
+        <div class="card border-success mb-3 game-card ${i==0? "flip-card-front": "flip-card-back"}">
             <div class="card-header bg-transparent border-success ">${header}</div>
             <div class="card-body text-success ">
             ${body}
             </div>
             <div class="card-footer bg-transparent border-success ">${footer}</div>
         </div>
-        `   
+        `
+        }
+        return result + '</div>'
     }
 }
 
@@ -72,65 +79,60 @@ class Card_set {
         this.order = cards.order;
         this.current_card_number = 0;
         this.front = ['На русском'];
-        this.back = ['Транскрипция','На иврите'];
+        this.back = ['Транскрипция', 'На иврите'];
         this.show_tags = true;
     }
-    
+
     cards_count() {
         return this.order.length
-    }    
+    }
 
     get_current_card_number() {
-        return this.current_card_number    
+        return this.current_card_number
     }
 
     get_card_number(card) {
-        const id = card.get_id(); 
+        const id = card.get_id();
         return this.order.findIndex(x => x == id)
     }
 
-    get_next_card(container=null){
-        if (this.current_card_number >= this.cards.length - 1)
-        {
-            throw "Card numbers out of range!"
-        }        
-        this.current_card_number++;
-        return this.get_card(this.current_card_number,container)
-    }
-
-    get_prev_card(container=null){
-        if (this.current_card_number <= 0)
-        {
-            throw "Card numbers out of range!"
+    get_next_card(container = null) {
+        if (this.current_card_number < this.cards_count() - 1) {
+            this.current_card_number++;
         }
-        this.current_card_number--;
-        return this.get_card(this.current_card_number,container)
-    }
-
-    get_card(number,container=null) {
        
-       return new Card( this.cards[this.order[number]] ,this.front,this.back,this,this.show_tags,container)
-        
+        return this.get_card(this.current_card_number, container)
     }
-  }
 
-  function ___show_next_card___(obj) {
+    get_prev_card(container = null) {
+        if (this.current_card_number > 0) {
+            this.current_card_number--;
+        }
+        
+        return this.get_card(this.current_card_number, container)
+    }
 
+    get_card(number, container = null) {
+
+        return new Card(this.cards[this.order[number]], this.front, this.back, this, this.show_tags, container)
+
+    }
+}
+
+function ___show_next_card___(obj) {
     obj.show_next_card();
+}
 
-
-  }
-
-   //assumming that "game" is global variable, need to find a way to avoid this (see start()).
-   class Game {
+//assumming that "game" is global variable, need to find a way to avoid this (see start()).
+class Game {
     // методы класса
-    constructor(container,globalname) {
+    constructor(container, globalname) {
 
         this.container = container;
         this.card_set = undefined;
         this.is_front_side = true;
         this.tags = undefined;
-        this.selected_tags =  undefined;
+        this.selected_tags = undefined;
         this.touchStart = null; //Точка начала касания
         this.touchStart = null; //Текущая позиция
 
@@ -141,17 +143,16 @@ class Card_set {
             .then(response => response.json())
             .then(result => {
                 console.log(result)
-                this.tags = result.tags;   
-                this.new_game()             
+                this.tags = result.tags;
+                this.new_game()
             })
-
     }
 
-    new_game(){
+    new_game() {
         var tags_list_body = "";
-        for (let i=0; i< this.tags.length;i++) {
+        for (let i = 0; i < this.tags.length; i++) {
             const tag_name = this.tags[i].name;
-            tags_list_body+=` 
+            tags_list_body += ` 
             <li class="tristate tristate-switcher list-group-item">
                 <input type="radio" id="item1-state-off" class="tag-picker" tag_name=${tag_name} name="item${i}" value="-1">
                 <input type="radio" id="item1-state-null" class="tag-picker" tag_name=${tag_name} name="item${i}" value="0" checked>
@@ -167,21 +168,19 @@ class Card_set {
                                     </ul>
                                     <div style="text-align: center; padding:10px" > <button class="btn btn-primary game-control" id = 'start-game-btn'><h1> start game </h1></button> </div>
                                     </div>`
-        document.querySelector('#start-game-btn').onclick = function(){game.start()};
+        document.querySelector('#start-game-btn').onclick = function () { game.start() };
     }
     get_selected_tags() {
 
         const tags = document.querySelectorAll(".tag-picker");
         let tags_include = [];
         let tags_exclude = [];
-        
-        for( let i = 0; i < tags.length; i++){
-            if (tags[i].checked)
-            {
-                switch (tags[i].getAttribute('value'))
-                {
-                    case '-1':tags_exclude.push(tags[i].getAttribute('tag_name'));
-                    case  '1':tags_include.push(tags[i].getAttribute('tag_name'));    
+
+        for (let i = 0; i < tags.length; i++) {
+            if (tags[i].checked) {
+                switch (tags[i].getAttribute('value')) {
+                    case '-1': tags_exclude.push(tags[i].getAttribute('tag_name'));
+                    case '1': tags_include.push(tags[i].getAttribute('tag_name'));
 
                 }
             }
@@ -189,14 +188,14 @@ class Card_set {
         console.log(tags_include);
         console.log(tags_exclude);
 
-        return {"tags_include":tags_include,"tags_exclude":tags_exclude}
+        return { "tags_include": tags_include, "tags_exclude": tags_exclude }
     }
 
 
     start() {
 
         this.selected_tags = this.get_selected_tags();
-        
+
         this.container.innerHTML = `
         <div id = 'current_card'></div>
         <div class = "game-control-bar">    
@@ -204,18 +203,18 @@ class Card_set {
         <button class="btn btn-primary game-control " id="reverse-card-btn" ><h1><i class="bi bi-arrow-repeat"></i> </h1></button>
         <button class="btn btn-primary game-control" id="show-next-card-btn"  ><h1><i class="bi bi-arrow-right"></i></h1></button>
         </div>`;
-        
+
         //assumming that "game" is global variable, need to find a way to avoid this.
-        document.querySelector('#show-prev-card-btn').onclick = function(){game.show_prev_card()};
-        document.querySelector('#show-next-card-btn').onclick = function(){game.show_next_card()};
-        document.querySelector('#reverse-card-btn').onclick = function(){game.reverse_card()};
+        document.querySelector('#show-prev-card-btn').onclick = function () { game.show_prev_card() };
+        document.querySelector('#show-next-card-btn').onclick = function () { game.show_next_card() };
+        document.querySelector('#reverse-card-btn').onclick = function () { game.reverse_card() };
         //Перехватываем события
         this.container.addEventListener("touchstart", function (e) { game.TouchStart(e); }); //Начало касания
         this.container.addEventListener("touchmove", function (e) { game.TouchMove(e); }); //Движение пальцем по экрану
         //Пользователь отпустил экран
         this.container.addEventListener("touchend", function (e) { game.TouchEnd(e, "green"); });
         //Отмена касания
-        this.container.addEventListener("touchcancel", function (e) {game.TouchEnd(e, "red"); });
+        this.container.addEventListener("touchcancel", function (e) { game.TouchEnd(e, "red"); });
 
         fetch('../get_cards', {
             method: 'POST',
@@ -231,29 +230,56 @@ class Card_set {
                 this.update_game()
             })
 
-    }  
-    show_prev_card(){
-        this.is_front_side = true;
-        this.card_set.get_prev_card();   
-        this.update_game();
+    }
+    show_prev_card() {
+        this.show_new_card('left');
+        /* this.is_front_side = true;
+        this.card_set.get_prev_card();
+        this.update_game();*/
     }
     
-    show_next_card(){
+    show_new_card(direction){
         this.is_front_side = true;
-        this.card_set.get_next_card();   
-        this.update_game();
-    }
-    
-    reverse_card(){
-        this.is_front_side = !this.is_front_side;   
-        this.update_game();
-    }      
+        let cardobject = this.card_set.get_card(this.card_set.current_card_number);
+        let card = document.querySelector('#card-holder'+cardobject.get_id())
+        card.classList.add('move-'+direction);
+        card.addEventListener('transitionend', function(e) {
+            e.target.remove();
+            if (direction =='right') {
+                game.card_set.get_next_card()
+            }
+            else {
+                game.card_set.get_prev_card()
+            }
+            game.update_game();
+            let newcardobject = game.card_set.get_card(game.card_set.current_card_number);
+            let newcard = document.querySelector('#card-holder'+newcardobject.get_id());
+            newcard.classList.add('position-'+direction);
+        });   
+    }    
 
-    update_game(){
-        const card_set = this.card_set; 
-        if (card_set.cards_count() == 0 ){
-            
-            this.container.innerHTML=`<div class="alert alert-danger" role="alert">
+    show_next_card() {
+        this.show_new_card('right');
+    }
+
+    reverse_card() {
+        this.is_front_side = !this.is_front_side;
+        let cardobject = this.card_set.get_card(this.card_set.current_card_number);
+        let card = document.querySelector('#card-holder'+cardobject.get_id())
+        if(this.is_front_side){
+            card.className= ' rotate0';
+        }
+        else{
+            card.className= 'rotate180';
+        }
+
+    }
+
+    update_game() {
+        const card_set = this.card_set;
+        if (card_set.cards_count() == 0) {
+
+            this.container.innerHTML = `<div class="alert alert-danger" role="alert">
                                            <h1>Card set is empty</h1>
                                      </div>
 
@@ -264,89 +290,85 @@ class Card_set {
                                      </form>
                                      `
         }
-        else{
+        else {
             document.querySelector('#show-prev-card-btn').disabled = (card_set.get_current_card_number() <= 0);
             document.querySelector('#show-next-card-btn').disabled = (card_set.get_current_card_number() >= card_set.cards_count() - 1);
             const container = document.querySelector('#current_card');
-            const card = card_set.get_card(card_set.get_current_card_number(),container);
+            const card = card_set.get_card(card_set.get_current_card_number(), container);
             card.show(this.is_front_side);
         }
 
     }
 
-TouchStart(e)
-{
-    //Получаем текущую позицию касания
-    this.touchStart = { x: e.changedTouches[0].clientX, y: e.changedTouches[0].clientY };
-    this.touchPosition = { x: this.touchStart.x, y: this.touchStart.y };
+    TouchStart(e) {
+        //Получаем текущую позицию касания
+        this.touchStart = { x: e.changedTouches[0].clientX, y: e.changedTouches[0].clientY };
+        this.touchPosition = { x: this.touchStart.x, y: this.touchStart.y };
 
-}
-
-TouchMove(e)
-{
-    //Получаем новую позицию
-    this.touchPosition = { x: e.changedTouches[0].clientX, y: e.changedTouches[0].clientY };
-}
-
-TouchEnd(e, color)
-{
-  
-    this.CheckAction(); //Определяем, какой жест совершил пользователь
-
-    //Очищаем позиции
-    this.touchStart = null;
-    this.touchPosition = null;
-}
-
-CheckAction()
-{   const sensitivity = 20;
-    var d = //Получаем расстояния от начальной до конечной точек по обеим осям
-    {
-   	 x: this.touchStart.x - this.touchPosition.x,
-   	 y: this.touchStart.y - this.touchPosition.y
-    };
-
-    var msg = ""; //Сообщение
-
-    if(Math.abs(d.x) > Math.abs(d.y)) //Проверяем, движение по какой оси было длиннее
-    {
-   	 if(Math.abs(d.x) > sensitivity) //Проверяем, было ли движение достаточно длинным
-   	 {
-   		 if(d.x > 0) //Если значение больше нуля, значит пользователь двигал пальцем справа налево
-   		 {
-   			console.log("Swipe Left");
-            this.show_next_card(); 
-   		 }
-   		 else //Иначе он двигал им слева направо
-   		 {
-            console.log("Swipe Right");
-            this.show_prev_card(); 
-   		 }
-   	 }
     }
-    else //Аналогичные проверки для вертикальной оси
-    {
-   	 if(Math.abs(d.y) > sensitivity)
-   	 {
-   		 if(d.y > 0) //Свайп вверх
-   		 {
-            console.log("Swipe up");
-   		 }
-   		 else //Свайп вниз
-   		 {
-            console.log("Swipe down");
-   		 }
-   	 }
+
+    TouchMove(e) {
+        //Получаем новую позицию
+        this.touchPosition = { x: e.changedTouches[0].clientX, y: e.changedTouches[0].clientY };
+    }
+
+    TouchEnd(e, color) {
+
+        this.CheckAction(); //Определяем, какой жест совершил пользователь
+
+        //Очищаем позиции
+        this.touchStart = null;
+        this.touchPosition = null;
+    }
+
+    CheckAction() {
+        const sensitivity = 20;
+        var d = //Получаем расстояния от начальной до конечной точек по обеим осям
+        {
+            x: this.touchStart.x - this.touchPosition.x,
+            y: this.touchStart.y - this.touchPosition.y
+        };
+
+        var msg = ""; //Сообщение
+
+        if (Math.abs(d.x) > Math.abs(d.y)) //Проверяем, движение по какой оси было длиннее
+        {
+            if (Math.abs(d.x) > sensitivity) //Проверяем, было ли движение достаточно длинным
+            {
+                if (d.x > 0) //Если значение больше нуля, значит пользователь двигал пальцем справа налево
+                {
+                    console.log("Swipe Left");
+                    this.show_prev_card();
+                }
+                else //Иначе он двигал им слева направо
+                {
+                    console.log("Swipe Right");
+                    this.show_next_card();
+                }
+            }
+        }
+        else //Аналогичные проверки для вертикальной оси
+        {
+            if (Math.abs(d.y) > sensitivity) {
+                if (d.y > 0) //Свайп вверх
+                {
+                    console.log("Swipe up");
+                }
+                else //Свайп вниз
+                {
+                    console.log("Swipe down");
+                }
+            }
+        }
+
     }
 
 }
 
-  }
 
 
 
-
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     game = new Game(document.querySelector('#game_container'));
 })
 

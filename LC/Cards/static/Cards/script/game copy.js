@@ -126,13 +126,11 @@ class Card_set {
     // методы класса
     constructor(container,globalname) {
 
-        this.container = container;
-        this.card_set = undefined;
-        this.is_front_side = true;
-        this.tags = undefined;
-        this.selected_tags =  undefined;
-        this.touchStart = null; //Точка начала касания
-        this.touchStart = null; //Текущая позиция
+        this.container = container
+        this.card_set = undefined
+        this.is_front_side = true
+        this.tags = undefined
+        this.selected_tags =  undefined
 
         fetch('../get_tags', {
             method: 'POST',
@@ -209,13 +207,6 @@ class Card_set {
         document.querySelector('#show-prev-card-btn').onclick = function(){game.show_prev_card()};
         document.querySelector('#show-next-card-btn').onclick = function(){game.show_next_card()};
         document.querySelector('#reverse-card-btn').onclick = function(){game.reverse_card()};
-        //Перехватываем события
-        this.container.addEventListener("touchstart", function (e) { game.TouchStart(e); }); //Начало касания
-        this.container.addEventListener("touchmove", function (e) { game.TouchMove(e); }); //Движение пальцем по экрану
-        //Пользователь отпустил экран
-        this.container.addEventListener("touchend", function (e) { game.TouchEnd(e, "green"); });
-        //Отмена касания
-        this.container.addEventListener("touchcancel", function (e) {game.TouchEnd(e, "red"); });
 
         fetch('../get_cards', {
             method: 'POST',
@@ -273,74 +264,6 @@ class Card_set {
         }
 
     }
-
-TouchStart(e)
-{
-    //Получаем текущую позицию касания
-    this.touchStart = { x: e.changedTouches[0].clientX, y: e.changedTouches[0].clientY };
-    this.touchPosition = { x: this.touchStart.x, y: this.touchStart.y };
-
-}
-
-TouchMove(e)
-{
-    //Получаем новую позицию
-    this.touchPosition = { x: e.changedTouches[0].clientX, y: e.changedTouches[0].clientY };
-}
-
-TouchEnd(e, color)
-{
-  
-    this.CheckAction(); //Определяем, какой жест совершил пользователь
-
-    //Очищаем позиции
-    this.touchStart = null;
-    this.touchPosition = null;
-}
-
-CheckAction()
-{   const sensitivity = 20;
-    var d = //Получаем расстояния от начальной до конечной точек по обеим осям
-    {
-   	 x: this.touchStart.x - this.touchPosition.x,
-   	 y: this.touchStart.y - this.touchPosition.y
-    };
-
-    var msg = ""; //Сообщение
-
-    if(Math.abs(d.x) > Math.abs(d.y)) //Проверяем, движение по какой оси было длиннее
-    {
-   	 if(Math.abs(d.x) > sensitivity) //Проверяем, было ли движение достаточно длинным
-   	 {
-   		 if(d.x > 0) //Если значение больше нуля, значит пользователь двигал пальцем справа налево
-   		 {
-   			console.log("Swipe Left");
-            this.show_next_card(); 
-   		 }
-   		 else //Иначе он двигал им слева направо
-   		 {
-            console.log("Swipe Right");
-            this.show_prev_card(); 
-   		 }
-   	 }
-    }
-    else //Аналогичные проверки для вертикальной оси
-    {
-   	 if(Math.abs(d.y) > sensitivity)
-   	 {
-   		 if(d.y > 0) //Свайп вверх
-   		 {
-            console.log("Swipe up");
-   		 }
-   		 else //Свайп вниз
-   		 {
-            console.log("Swipe down");
-   		 }
-   	 }
-    }
-
-}
-
   }
 
 
@@ -351,6 +274,136 @@ document.addEventListener('DOMContentLoaded', function() {
 })
 
 
+window.addEventListener("resize", InitApp); //При растягивании окна приложение будет инициализироваться заново
+
+function InitApp() //Растягиваем холст на весь экран
+{
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+}
+
+var canvas
+var ctx
+var msgBox
+var touchStart
+var touchStart
+var sensitivity
+
+document.addEventListener('DOMContentLoaded', function() {
+
+//Получение холста и его контекста
+canvas = document.getElementById("canvas");
+ctx = canvas.getContext("2d");
+
+//Чувствительность — количество пикселей, после которого жест будет считаться свайпом
+sensitivity = 20;
+
+//Получение поля, в котором будут выводиться сообщения
+msgBox = document.getElementById("msg-box");
+
+touchStart = null; //Точка начала касания
+touchStart = null; //Текущая позиция
+
+//Перехватываем события
+canvas.addEventListener("touchstart", function (e) { TouchStart(e); }); //Начало касания
+canvas.addEventListener("touchmove", function (e) { TouchMove(e); }); //Движение пальцем по экрану
+//Пользователь отпустил экран
+canvas.addEventListener("touchend", function (e) { TouchEnd(e, "green"); });
+//Отмена касания
+canvas.addEventListener("touchcancel", function (e) { TouchEnd(e, "red"); });
 
 
 
+InitApp(); //Инициализировать приложение
+})
+
+function Draw(x, y, weight, color = "#000") //Функция рисования точки
+{
+    ctx.fillStyle = color;
+
+    let weightHalf = weight / 2;
+
+    ctx.fillRect(x - weightHalf, y - weightHalf, weight, weight);
+}
+
+function DrawLine() //Функция рисования линии
+{
+    ctx.strokeStyle = "#ccc";
+
+    ctx.beginPath();
+
+    ctx.moveTo(touchStart.x, touchStart.y);
+    ctx.lineTo(touchPosition.x, touchPosition.y);
+
+    ctx.stroke();
+}
+
+function TouchStart(e)
+{
+    //Получаем текущую позицию касания
+    touchStart = { x: e.changedTouches[0].clientX, y: e.changedTouches[0].clientY };
+    touchPosition = { x: touchStart.x, y: touchStart.y };
+
+    Draw(touchPosition.x, touchPosition.y, 6, "blue"); //Рисуем точку начала касания
+}
+
+function TouchMove(e)
+{
+    //Получаем новую позицию
+    touchPosition = { x: e.changedTouches[0].clientX, y: e.changedTouches[0].clientY };
+    Draw(touchPosition.x, touchPosition.y, 2); //Рисуем точку текущей позиции
+}
+
+function TouchEnd(e, color)
+{
+    DrawLine(); //Рисуем линию между стартовой и конечной точками
+    Draw(touchPosition.x, touchPosition.y, 6, color); //Рисуем конечную точку
+
+    CheckAction(); //Определяем, какой жест совершил пользователь
+
+    //Очищаем позиции
+    touchStart = null;
+    touchPosition = null;
+}
+
+function CheckAction()
+{
+    var d = //Получаем расстояния от начальной до конечной точек по обеим осям
+    {
+   	 x: touchStart.x - touchPosition.x,
+   	 y: touchStart.y - touchPosition.y
+    };
+
+    var msg = ""; //Сообщение
+
+    if(Math.abs(d.x) > Math.abs(d.y)) //Проверяем, движение по какой оси было длиннее
+    {
+   	 if(Math.abs(d.x) > sensitivity) //Проверяем, было ли движение достаточно длинным
+   	 {
+   		 if(d.x > 0) //Если значение больше нуля, значит пользователь двигал пальцем справа налево
+   		 {
+   			 msg = "Swipe Left";
+   		 }
+   		 else //Иначе он двигал им слева направо
+   		 {
+   			 msg = "Swipe Right";
+   		 }
+   	 }
+    }
+    else //Аналогичные проверки для вертикальной оси
+    {
+   	 if(Math.abs(d.y) > sensitivity)
+   	 {
+   		 if(d.y > 0) //Свайп вверх
+   		 {
+   			 msg = "Swipe up";
+   		 }
+   		 else //Свайп вниз
+   		 {
+   			 msg = "Swipe down";
+   		 }
+   	 }
+    }
+
+    msgBox.innerText = msg; //Выводим сообщение
+}

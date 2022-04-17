@@ -2,6 +2,7 @@ from django.shortcuts import render
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from .models import Card
+from random import shuffle
 
 # Create your views here.
 def index(request):
@@ -15,5 +16,14 @@ def game (request):
 def get_cards(request):
     
    result = {}
-   result ['cards'] = [card.serialize() for card in Card.objects.all()]
+   cards = Card.objects.all()
+   cards_dict ={}
+   cards_order =[]
+   for card in cards:
+       cards_dict[card.id] = card.serialize()
+       cards_order.append(card.id) 
+   shuffle(cards_order) 
+
+   result ['cards'] = {'cards':cards_dict,'order':cards_order} 
+
    return JsonResponse(result, safe=False)

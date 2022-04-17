@@ -6,6 +6,9 @@ from django.utils.timezone import now
 class Tag (models.Model):    
     name = models.CharField(null=False, max_length=20, unique=True)
 
+    def serialize(self):
+        return {"name":self.name}
+
     def __str__(self):
         return self.name
 

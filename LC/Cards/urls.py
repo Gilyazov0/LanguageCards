@@ -8,4 +8,5 @@ urlpatterns = [
      path(route='', view=views.index, name='index'),
      path(route='game/', view=views.game, name='game'),
      path(route='get_cards', view=views.get_cards, name='get_cards'),
-     ]  + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+     path(route='get_tags', view=views.get_tags, name='get_tags'),
+     ]  + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT) 

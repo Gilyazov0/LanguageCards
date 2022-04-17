@@ -1,6 +1,6 @@
 
-var card_set 
-var is_front_side = true
+var game
+
 
 
 //Игровая карта. Хранит данные карты в виде сырых данных JSON
@@ -31,12 +31,12 @@ class Card {
         
         var header = '';
         if (this.card_set != null) {
-                header = (card_set.get_card_number(this)+1)+'/'+card_set.cards_count()
+                header = (this.card_set.get_card_number(this)+1)+'/'+this.card_set.cards_count()
             }
 
         var body = '';
 
-        for (var i=0; i< attributes.length;i++) {
+        for (let i=0; i< attributes.length;i++) {
             const FA = this.card_data.FAs[attributes[i]]
             if (FA != undefined){
                 body +=  `<h5 class="card-title ">${this.card_data.FAs[attributes[i]]}</h5> \n`;
@@ -47,7 +47,7 @@ class Card {
 
         var footer =''
         if (show_tags){
-            for (var i=0; i< tags.length;i++) {
+            for (let i=0; i< tags.length;i++) {
                 footer +='<' + tags[i] + '>';
             }
         }
@@ -114,53 +114,163 @@ class Card_set {
     }
   }
 
-  class Game {
-    // методы класса
-    constructor(cards) {}
+  function ___show_next_card___(obj) {
+
+    obj.show_next_card();
+
+
   }
-function show_prev_card(){
-    is_front_side = true;
-    card_set.get_prev_card();   
-    update_game();
-}
 
-function show_next_card(){
-    is_front_side = true;
-    card_set.get_next_card();   
-    update_game();
-}
+   //assumming that "game" is global variable, need to find a way to avoid this (see start()).
+   class Game {
+    // методы класса
+    constructor(container,globalname) {
 
-function reverse_card(){
-    is_front_side = !is_front_side;   
-    update_game();
-}
+        this.container = container
+        this.card_set = undefined
+        this.is_front_side = true
+        this.tags = undefined
+        this.selected_tags =  undefined
+
+        fetch('../get_tags', {
+            method: 'POST',
+            body: JSON.stringify({})
+        })
+            .then(response => response.json())
+            .then(result => {
+                console.log(result)
+                this.tags = result.tags;   
+                this.new_game()             
+            })
+
+    }
+
+    new_game(){
+        var tags_list_body = "";
+        for (let i=0; i< this.tags.length;i++) {
+            const tag_name = this.tags[i].name;
+            tags_list_body+=` 
+            <li class="tristate tristate-switcher list-group-item">
+                <input type="radio" id="item1-state-off" class="tag-picker" tag_name=${tag_name} name="item${i}" value="-1">
+                <input type="radio" id="item1-state-null" class="tag-picker" tag_name=${tag_name} name="item${i}" value="0" checked>
+                <input type="radio" id="item1-state-on" class="tag-picker" tag_name=${tag_name} name="item${i}" value="1">
+                <i></i>
+                <span>${tag_name}</span>
+            </li>`
+        }
+        this.container.innerHTML = `
+                                    <div><span style="text-align: center"><h3>Select tags</h3> </span>
+                                    <ul class="list-group">
+                                    ${tags_list_body}
+                                    </ul>
+                                    <div style="text-align: center; padding:10px" > <button class="btn btn-primary game-control" id = 'start-game-btn'><h1> start game </h1></button> </div>
+                                    </div>`
+        document.querySelector('#start-game-btn').onclick = function(){game.start()};
+    }
+    get_selected_tags() {
+
+        const tags = document.querySelectorAll(".tag-picker");
+        let tags_include = [];
+        let tags_exclude = [];
+        
+        for( let i = 0; i < tags.length; i++){
+            if (tags[i].checked)
+            {
+                switch (tags[i].getAttribute('value'))
+                {
+                    case '-1':tags_exclude.push(tags[i].getAttribute('tag_name'));
+                    case  '1':tags_include.push(tags[i].getAttribute('tag_name'));    
+
+                }
+            }
+        }
+        console.log(tags_include);
+        console.log(tags_exclude);
+
+        return {"tags_include":tags_include,"tags_exclude":tags_exclude}
+    }
 
 
-function update_game(){
+    start() {
+
+        this.selected_tags = this.get_selected_tags();
+        
+        this.container.innerHTML = `
+        <div id = 'current_card'></div>
+        <div class = "game-control-bar">    
+        <button class="btn btn-primary game-control" id="show-prev-card-btn" ><h1><i class="bi bi-arrow-left"></i> </h1></button>
+        <button class="btn btn-primary game-control " id="reverse-card-btn" ><h1><i class="bi bi-arrow-repeat"></i> </h1></button>
+        <button class="btn btn-primary game-control" id="show-next-card-btn"  ><h1><i class="bi bi-arrow-right"></i></h1></button>
+        </div>`;
+        
+        //assumming that "game" is global variable, need to find a way to avoid this.
+        document.querySelector('#show-prev-card-btn').onclick = function(){game.show_prev_card()};
+        document.querySelector('#show-next-card-btn').onclick = function(){game.show_next_card()};
+        document.querySelector('#reverse-card-btn').onclick = function(){game.reverse_card()};
+
+        fetch('../get_cards', {
+            method: 'POST',
+            body: JSON.stringify({
+                filter: this.selected_tags
+            })
+        }
+        )
+            .then(response => response.json())
+            .then(result => {
+                console.log(result)
+                this.card_set = new Card_set(result.cards);
+                this.update_game()
+            })
+
+    }  
+    show_prev_card(){
+        this.is_front_side = true;
+        this.card_set.get_prev_card();   
+        this.update_game();
+    }
     
-    document.querySelector('#show-prev-card-btn').disabled = (card_set.get_current_card_number() <= 0);
-    document.querySelector('#show-next-card-btn').disabled = (card_set.get_current_card_number() >= card_set.cards_count() - 1);
-    const container = document.querySelector('#current_card');
-    const card = card_set.get_card(card_set.get_current_card_number(),container);
-    card.show(is_front_side);
-}
+    show_next_card(){
+        this.is_front_side = true;
+        this.card_set.get_next_card();   
+        this.update_game();
+    }
+    
+    reverse_card(){
+        this.is_front_side = !this.is_front_side;   
+        this.update_game();
+    }      
+
+    update_game(){
+        const card_set = this.card_set; 
+        if (card_set.cards_count() == 0 ){
+            
+            this.container.innerHTML=`<div class="alert alert-danger" role="alert">
+                                           <h1>Card set is empty</h1>
+                                     </div>
+
+                                     <form action="/Cards/game/">   
+                                        <div style="text-align: center; padding:10px"> 
+                                             <input type="submit" class="btn btn-primary game-control" value = "Start new game"></input>
+                                        </div>
+                                     </form>
+                                     `
+        }
+        else{
+            document.querySelector('#show-prev-card-btn').disabled = (card_set.get_current_card_number() <= 0);
+            document.querySelector('#show-next-card-btn').disabled = (card_set.get_current_card_number() >= card_set.cards_count() - 1);
+            const container = document.querySelector('#current_card');
+            const card = card_set.get_card(card_set.get_current_card_number(),container);
+            card.show(this.is_front_side);
+        }
+
+    }
+  }
+
+
+
+
 document.addEventListener('DOMContentLoaded', function() {
-    document.querySelector('#show-prev-card-btn').onclick = show_prev_card;
-    document.querySelector('#show-next-card-btn').onclick = show_next_card;
-    document.querySelector('#reverse-card-btn').onclick = reverse_card;
-    fetch('../get_cards', {
-        method: 'POST',
-        body: JSON.stringify({
-        filter: 'all'
-        })
-      }
-      )
-      .then(response => response.json())
-      .then(result => { 
-        console.log(result)           
-        card_set = new Card_set (result.cards);
-        update_game()
-        })
+    game = new Game(document.querySelector('#game_container'));
 })
 
 

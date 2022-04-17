@@ -7,3 +7,10 @@
     display: flex;
     justify-content: space-between;
 }
+
+.tag-selector
+{
+    width: 90%;
+    display: flex;
+    justify-content: space-between;
+}

@@ -16,7 +16,7 @@ class Card {
 
     show(is_front_side) {
         if (this.container != null) {
-            /*let element = document.createElement('div');
+          /*  let element = document.createElement('div');
             element.innerHTML = this.getHTML(is_front_side);
             this.container.insertBefore(element,this.container.firstChild);*/
             this.container.innerHTML = this.getHTML(is_front_side);
@@ -237,14 +237,18 @@ class Game {
         this.card_set.get_prev_card();
         this.update_game();*/
     }
-    
     show_new_card(direction){
         this.is_front_side = true;
         let cardobject = this.card_set.get_card(this.card_set.current_card_number);
-        let card = document.querySelector('#card-holder'+cardobject.get_id())
+        let card = document.querySelector('#card-holder'+cardobject.get_id())        
+       
+        if (card.classList.contains('position-right') ||card.classList.contains('position-left') ){
+            return
+        }
+        card.classList = [];         
         card.classList.add('move-'+direction);
-        card.addEventListener('transitionend', function(e) {
-            e.target.remove();
+
+        card.addEventListener('transitionend', () => {
             if (direction =='right') {
                 game.card_set.get_next_card()
             }
@@ -255,9 +259,14 @@ class Game {
             let newcardobject = game.card_set.get_card(game.card_set.current_card_number);
             let newcard = document.querySelector('#card-holder'+newcardobject.get_id());
             newcard.classList.add('position-'+direction);
-        });   
-    }    
 
+            newcard.addEventListener('animationend', () => {
+                 newcard.classList.remove('position-'+direction);
+            });
+          });        
+         
+    }    
+   
     show_next_card() {
         this.show_new_card('right');
     }
@@ -297,14 +306,12 @@ class Game {
             const card = card_set.get_card(card_set.get_current_card_number(), container);
             card.show(this.is_front_side);
         }
-
     }
 
     TouchStart(e) {
         //Получаем текущую позицию касания
         this.touchStart = { x: e.changedTouches[0].clientX, y: e.changedTouches[0].clientY };
         this.touchPosition = { x: this.touchStart.x, y: this.touchStart.y };
-
     }
 
     TouchMove(e) {
@@ -360,13 +367,8 @@ class Game {
                 }
             }
         }
-
     }
-
 }
-
-
-
 
 document.addEventListener('DOMContentLoaded', function () {
     game = new Game(document.querySelector('#game_container'));

@@ -29,17 +29,44 @@
 }
 
 .move-right {
-    transform: translateX(100%);
-    transition: transform 1s;
+    animation-name: move_right;
+    animation-duration: 1s;
 
 }
+@keyframes move_right {
+    from {
+      transform: translateX(0%);
+      
+    }
+  
+    to {
+        transform: translateX(100%);
+       }
+  }
+
+.move-left {     
+    animation-name: move_left;
+    animation-duration: 1s;
+
+}
+
+@keyframes move_left{
+    from {
+      transform: translateX(0%);
+      
+    }
+  
+    to {
+        transform: translateX(-100%);
+       }
+  }
 .position-right {
     /*transform: translateX(-50%);*/
-    animation-name: slidein_right;
+    animation-name: position_right;
     animation-duration: 1s;
 }
 
-@keyframes slidein_right {
+@keyframes position_right {
     from {
       transform: translateX(-100%);
       
@@ -50,18 +77,13 @@
        }
   }
 
-.move-left {
-    transform: translateX(-100%);
-    transition: transform 1s;
-
-}
 .position-left {
     /*transform: translateX(-50%);*/
-    animation-name: slidein_left;
+    animation-name: position_left;
     animation-duration: 1s;
 }
 
-@keyframes slidein_left {
+@keyframes position_left {
     from {
       transform: translateX(+100%);
       

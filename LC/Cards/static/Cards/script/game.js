@@ -241,14 +241,14 @@ class Game {
         this.is_front_side = true;
         let cardobject = this.card_set.get_card(this.card_set.current_card_number);
         let card = document.querySelector('#card-holder'+cardobject.get_id())        
-       
+       /*
         if (card.classList.contains('position-right') ||card.classList.contains('position-left') ){
             return
-        }
+        }*/
         card.classList = [];         
         card.classList.add('move-'+direction);
 
-        card.addEventListener('transitionend', () => {
+        card.addEventListener('animationend', () => {
             if (direction =='right') {
                 game.card_set.get_next_card()
             }

@@ -16,30 +16,79 @@ class Card {
 
     show(is_front_side) {
         if (this.container != null) {
-          /*  let element = document.createElement('div');
-            element.innerHTML = this.getHTML(is_front_side);
-            this.container.insertBefore(element,this.container.firstChild);*/
             this.container.innerHTML = this.getHTML(is_front_side);
+            const tag_selector = this.container.querySelector("#card_tag_selector" + this.get_id());
+            tag_selector.addEventListener("change", function (e) 
+            {   
+                const element = e.target;
+                const card_id = element.getAttribute("card_id");
+                const tag_id = element.value;
+               
+                fetch('../set_card_tag', {
+                    method: 'POST',
+                    body: JSON.stringify({'tag_id':tag_id,'card_id':card_id})
+                })
+                    .then(response => response.json())
+                    .then(result => {
+                        game.update_card(card_id,result)
+                        console.log(result)
+                })
+            })
+            const tag_elements =  this.container.querySelectorAll(".card_tag_item" );
+            for (let i = 0; i < tag_elements.length; i++) {
+                tag_elements[i].addEventListener("click", function (e) {
+                    const element = e.target;
+                    const card_id = element.getAttribute("card_id");
+                    const tag_id = element.getAttribute("tag_id"); 
+                   
+                    fetch('../delete_card_tag', {
+                        method: 'POST',
+                        body: JSON.stringify({'tag_id':tag_id,'card_id':card_id})
+                    })
+                        .then(response => response.json())
+                        .then(result => {
+                            game.update_card(card_id,result)
+                            console.log(result)
+                    })
+                })  
             }
+            
+
+        }
     }
+
+
+    _tags_to_string(tags, class_ = '') {
+        let result = ''
+        for (let i = 0; i < tags.length; i++) {
+            result += `<span card_id = '${this.get_id()}' tag_id = '${tags[i].id}' class = '${class_}'>&lt;${tags[i].name}&gt;</span>`;
+        }
+
+        return result
+    }
+
+
+
 
     getHTML(front = true) {
 
-        let result =`<div id="card-holder${this.get_id()}" style ="text-align:center">`;
+        let result = `<div id="card-holder${this.get_id()}" style ="text-align:center">`;
 
         const sides = [front, !front]
         for (let i = 0; i < sides.length; i++) {
-           
+
             let attributes = (sides[i]) ? this.front : this.back;
             let show_tags = (sides[i]) ? false : this.show_tags;
             let tags = this.card_data.tags;
+            // user tags applyed to this card
+            let card_user_tags = this.card_data.user_tags;
 
-            var header = '';
+            let header = '';
             if (this.card_set != null) {
                 header = (this.card_set.get_card_number(this) + 1) + '/' + this.card_set.cards_count()
             }
 
-            var body = '';
+            let body = '';
 
             for (let i = 0; i < attributes.length; i++) {
                 const FA = this.card_data.FAs[attributes[i]]
@@ -50,16 +99,35 @@ class Card {
                 }
             }
 
-            var footer = ''
+            let footer = ''
             if (show_tags) {
-                for (let i = 0; i < tags.length; i++) {
-                    footer += '<' + tags[i] + '>';
-                }
+                footer += this._tags_to_string(tags)
             }
 
-            result +=`
-        <div class="card border-success mb-3 game-card ${i==0? "flip-card-front": "flip-card-back"}">
-            <div class="card-header bg-transparent border-success ">${header}</div>
+            //user_tags selector
+            let user_tags_selector = `
+                <form style="padding-bottom: 0px; margin: 0px; ">
+                    <select id ="card_tag_selector${this.get_id()}" card_id ="${this.get_id()}" class="form-select form-select-sm" aria-label=".form-select-sm example">
+                    <option selected>set tag</option>
+                                `
+
+            // all user_tags of current user                   
+            let game_user_tags = this.card_set.get_user_tags()
+            for (let i = 0; i < game_user_tags.length; i++) {
+                user_tags_selector += `<option value=${game_user_tags[i].id}>${game_user_tags[i].name}</option>`
+            }
+
+            user_tags_selector += '</select></form>'
+
+            let user_tags_string = ` <div style="display: flex; align-items: center;">                                 
+                                        ${this._tags_to_string(card_user_tags,'card_tag_item')} 
+                                        ${user_tags_selector}
+                                    </div>
+                                  `
+
+            result += `
+        <div class="card border-success mb-3 game-card ${i == 0 ? "flip-card-front" : "flip-card-back"}">
+            <div class="card-header bg-transparent border-success ">${header} ${user_tags_string}</div>
             <div class="card-body text-success ">
             ${body}
             </div>
@@ -74,13 +142,25 @@ class Card {
 //Игра. Хранит данные игры (список карты в виде данных JSON)
 class Card_set {
     // методы класса
-    constructor(cards) {
+    constructor(cards, tags) {
         this.cards = cards.cards;
         this.order = cards.order;
+        this.tags = tags;
         this.current_card_number = 0;
         this.front = ['На русском'];
         this.back = ['Транскрипция', 'На иврите'];
         this.show_tags = true;
+    }
+
+    update_card(card_id,card_data) {
+        this.cards[Number(card_id)] = card_data;
+    
+    }
+
+
+    get_user_tags() {
+        return this.tags.user_tags
+
     }
 
     cards_count() {
@@ -100,7 +180,7 @@ class Card_set {
         if (this.current_card_number < this.cards_count() - 1) {
             this.current_card_number++;
         }
-       
+
         return this.get_card(this.current_card_number, container)
     }
 
@@ -108,7 +188,7 @@ class Card_set {
         if (this.current_card_number > 0) {
             this.current_card_number--;
         }
-        
+
         return this.get_card(this.current_card_number, container)
     }
 
@@ -146,6 +226,11 @@ class Game {
                 this.tags = result.tags;
                 this.new_game()
             })
+    }
+    
+    update_card(card_id,card_data) {
+        this.card_set.update_card(card_id,card_data)
+        this.update_game() 
     }
 
     new_game() {
@@ -226,7 +311,7 @@ class Game {
             .then(response => response.json())
             .then(result => {
                 console.log(result)
-                this.card_set = new Card_set(result.cards);
+                this.card_set = new Card_set(result.cards, result.tags);
                 this.update_game()
             })
 
@@ -237,19 +322,19 @@ class Game {
         this.card_set.get_prev_card();
         this.update_game();*/
     }
-    show_new_card(direction){
+    show_new_card(direction) {
         this.is_front_side = true;
         let cardobject = this.card_set.get_card(this.card_set.current_card_number);
-        let card = document.querySelector('#card-holder'+cardobject.get_id())        
-       /*
-        if (card.classList.contains('position-right') ||card.classList.contains('position-left') ){
-            return
-        }*/
-        card.classList = [];         
-        card.classList.add('move-'+direction);
+        let card = document.querySelector('#card-holder' + cardobject.get_id())
+        /*
+         if (card.classList.contains('position-right') ||card.classList.contains('position-left') ){
+             return
+         }*/
+        card.classList = [];
+        card.classList.add('move-' + direction);
 
         card.addEventListener('animationend', () => {
-            if (direction =='right') {
+            if (direction == 'right') {
                 game.card_set.get_next_card()
             }
             else {
@@ -257,16 +342,16 @@ class Game {
             }
             game.update_game();
             let newcardobject = game.card_set.get_card(game.card_set.current_card_number);
-            let newcard = document.querySelector('#card-holder'+newcardobject.get_id());
-            newcard.classList.add('position-'+direction);
+            let newcard = document.querySelector('#card-holder' + newcardobject.get_id());
+            newcard.classList.add('position-' + direction);
 
             newcard.addEventListener('animationend', () => {
-                 newcard.classList.remove('position-'+direction);
+                newcard.classList.remove('position-' + direction);
             });
-          });        
-         
-    }    
-   
+        });
+
+    }
+
     show_next_card() {
         this.show_new_card('right');
     }
@@ -274,16 +359,15 @@ class Game {
     reverse_card() {
         this.is_front_side = !this.is_front_side;
         let cardobject = this.card_set.get_card(this.card_set.current_card_number);
-        let card = document.querySelector('#card-holder'+cardobject.get_id())
-        if(this.is_front_side){
-            card.className= ' rotate0';
+        let card = document.querySelector('#card-holder' + cardobject.get_id())
+        if (this.is_front_side) {
+            card.className = ' rotate0';
         }
-        else{
-            card.className= 'rotate180';
+        else {
+            card.className = 'rotate180';
         }
 
     }
-
     update_game() {
         const card_set = this.card_set;
         if (card_set.cards_count() == 0) {

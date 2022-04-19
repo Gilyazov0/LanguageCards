@@ -264,11 +264,58 @@ class Game {
         tags_list_body += "<div class=column-in-container>" + this.get_tags_html(this.tags,'tags','Common tags') + '</div></div>';
         
         this.container.innerHTML = `
-                                    <div><span style="text-align: center"><h3>Select tags</h3> </span>                                    
-                                    ${tags_list_body}                                    
+                                    <div class="alert alert-primary" id="lable-cards-count" > <h1>Number of cards in game</h1></div> 
+                                    <div>                                   
+                                    ${tags_list_body}  
+                                                                     
                                     <div style="text-align: center; padding:10px" > <button class="btn btn-primary game-control" id = 'start-game-btn'><h1> start game </h1></button> </div>
                                     </div>`
+
+    
         document.querySelector('#start-game-btn').onclick = function () { game.start() };
+
+        const tag_pickers = document.querySelectorAll(".tag-picker");        
+        for (let i = 0; i < tag_pickers.length; i++) {
+            tag_pickers[i].addEventListener('change', function (e) {
+                game.update_start_game_page()
+            })     
+        }
+
+        this.update_start_game_page()
+    }
+
+    update_start_game_page(){
+        this.selected_tags = this.get_selected_tags();        
+
+                fetch('../get_cards', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        filter: this.selected_tags
+                    })
+                }
+                )
+                    .then(response => response.json())
+                    .then(result => {
+                        
+                        const card_count = result.cards.order.length;
+                        const lable = document.querySelector("#lable-cards-count")
+                        if (card_count ==0){
+                            if (this.selected_tags.tags_exclude.length > 0 || this.selected_tags.tags_include.length > 0){
+                                lable.innerHTML=`<h1>No cards found</h1>`
+                                lable.className = "alert alert-warning"
+                            }
+                            else{
+                                lable.innerHTML=`<h1>Select cards</h1>`
+                                lable.className = "alert alert-primary"                           
+                            }                
+                        }
+                        else{
+                            lable.innerHTML=`<h1>Selected ${card_count} cards</h1>`
+                            lable.className = "alert alert-primary"
+                        }                      
+                         
+                    })
+
     }
    
 

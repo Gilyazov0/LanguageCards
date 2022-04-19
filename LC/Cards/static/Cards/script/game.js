@@ -232,16 +232,16 @@ class Game {
         this.card_set.update_card(card_id,card_data)
         this.update_game() 
     }
-
+ 
     new_game() {
         var tags_list_body = "";
         for (let i = 0; i < this.tags.length; i++) {
             const tag_name = this.tags[i].name;
             tags_list_body += ` 
             <li class="tristate tristate-switcher list-group-item">
-                <input type="radio" id="item1-state-off" class="tag-picker" tag_name=${tag_name} name="item${i}" value="-1">
-                <input type="radio" id="item1-state-null" class="tag-picker" tag_name=${tag_name} name="item${i}" value="0" checked>
-                <input type="radio" id="item1-state-on" class="tag-picker" tag_name=${tag_name} name="item${i}" value="1">
+                <input type="radio" id="item1-state-off" class="tag-picker" tag_name="${tag_name}" name="item${i}" value="-1">
+                <input type="radio" id="item1-state-null" class="tag-picker" tag_name="${tag_name}" name="item${i}" value="0" checked>
+                <input type="radio" id="item1-state-on" class="tag-picker" tag_name="${tag_name}" name="item${i}" value="1">
                 <i></i>
                 <span>${tag_name}</span>
             </li>`
@@ -255,6 +255,8 @@ class Game {
                                     </div>`
         document.querySelector('#start-game-btn').onclick = function () { game.start() };
     }
+   
+
     get_selected_tags() {
 
         const tags = document.querySelectorAll(".tag-picker");

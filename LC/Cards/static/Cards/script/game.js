@@ -402,6 +402,11 @@ class Game {
             const container = document.querySelector('#current_card');
             const card = card_set.get_card(card_set.get_current_card_number(), container);
             card.show(this.is_front_side);
+            let card_titles = document.querySelectorAll('.card-title');
+            for(let i=0;i<card_titles.length; i++){
+                card_titles[i].onclick = function () { game.reverse_card() };
+            }           
+            
         }
     }
 

@@ -64,7 +64,10 @@ def create_tag(request):
         tag = Tag()
         tag.user = request.user
         tag.name = user_tag_name
-        tag.save()
+        try:
+            tag.save()
+        except:
+            pass    
         return HttpResponseRedirect(reverse('Cards:profile'))
 
 
@@ -140,8 +143,9 @@ def set_card_tag(request):
         card = get_object_or_404(Card,pk = card_id)
         tag = get_object_or_404(Tag,pk = tag_id)
         if not card.tags.filter(id = tag_id):
-            card.tags.add(tag)
+            card.tags.add(tag)            
             card.save()
+            
     return JsonResponse(card.serialize(request.user), safe=False)
 
 @csrf_exempt

@@ -8,7 +8,7 @@ from django.contrib.auth.models import User
 class Tag (models.Model):
     name = models.CharField(null=False, max_length=20, unique=False)
     user = models.ForeignKey(
-        User, null=True, on_delete=models.CASCADE, related_name='user_tags')
+        User, blank=True,null=True, on_delete=models.CASCADE, related_name='user_tags')
 
     def serialize(self):
         return {"name": self.name,"id":self.id}

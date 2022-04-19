@@ -281,7 +281,6 @@ class Game {
                 switch (tags[i].getAttribute('value')) {
                     case '-1': tags_exclude.push(tags[i].getAttribute('tag_name'));
                     case '1': tags_include.push(tags[i].getAttribute('tag_name'));
-
                 }
             }
         }

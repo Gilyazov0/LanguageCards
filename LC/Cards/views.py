@@ -119,7 +119,7 @@ def get_tags_dict(user):
     result = {}
     tags = Tag.objects.filter(user=None)
     result['tags'] = [tag.serialize() for tag in tags]
-    if user:
+    if user.is_authenticated:
         result['user_tags'] = [tag.serialize() for tag in Tag.objects.filter(user=user)]
     else:
         result['user_tags'] = []

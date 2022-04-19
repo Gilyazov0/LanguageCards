@@ -36,7 +36,7 @@ class Card(models.Model):
         result['tags'] = tags_
 
         result['user_tags'] = []
-        if user:
+        if user.is_authenticated:
             result['user_tags'] =[tag.serialize() for tag in self.tags.filter(user = user)]
 
         FAs_ = {}

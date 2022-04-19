@@ -9,7 +9,7 @@
                 {% csrf_token %}
                 <div class="input-group">
                     <input type="hidden" name="tag_id" value=" {{ tag.id }} ">
-                    <label style="align-self: center;">{{ tag }}</label>
+                    <label style="align-self: center;">{{ tag.name }}</label>
                     <button class="btn btn-primary" type="submit" style="margin-left: auto">del</button>
                 </div>
             </form>

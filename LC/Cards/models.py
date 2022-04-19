@@ -6,7 +6,7 @@ from django.contrib.auth.models import User
 
 
 class Tag (models.Model):
-    name = models.CharField(null=False, max_length=20, unique=True)
+    name = models.CharField(null=False, max_length=20, unique=False)
     user = models.ForeignKey(
         User, null=True, on_delete=models.CASCADE, related_name='user_tags')
 
@@ -17,6 +17,9 @@ class Tag (models.Model):
         if self.user:
             return  self.user.username + ":" +self.name 
         return self.name 
+    
+    class Meta:
+        unique_together = (('name', 'user'),)
 
 
 class Card(models.Model):

@@ -104,11 +104,11 @@ def get_cards(request):
     tags_exclude = data['filter'].get("tags_exclude", [])
 
     result = {}
-    cards = Card.objects.filter(tags__name__in=tags_include).exclude(
-        tags__name__in=tags_exclude)
+    cards = Card.objects.filter(tags__id__in=tags_include).exclude(
+        tags__id__in=tags_exclude)
     cards_dict = {}
     cards_order = []
-    for card in cards:
+    for card in cards:        
         cards_dict[card.id] = card.serialize(request.user)
         cards_order.append(card.id)
     shuffle(cards_order)

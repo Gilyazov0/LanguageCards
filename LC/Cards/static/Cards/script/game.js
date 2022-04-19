@@ -240,12 +240,13 @@ class Game {
     get_tags_html(tags, type, column_name){
         let tags_list_body = `<div> ${column_name}</div>`;
         for (let i = 0; i < tags.length; i++) {
+            const tag_id = tags[i].id;
             const tag_name = tags[i].name;
             tags_list_body += ` 
             <li class="tristate tristate-switcher list-group-item  ">
-                <input type="radio" class="tag-picker" tag_name="${tag_name}" name="item${type}${i}" value="-1" >
-                <input type="radio" class="tag-picker" tag_name="${tag_name}" name="item${type}${i}" value="0" checked >
-                <input type="radio" class="tag-picker" tag_name="${tag_name}" name="item${type}${i}" value="1" >
+                <input type="radio" class="tag-picker" tag_id="${tag_id}" name="item${type}${i}" value="-1" >
+                <input type="radio" class="tag-picker" tag_id="${tag_id}" name="item${type}${i}" value="0" checked >
+                <input type="radio" class="tag-picker" tag_id="${tag_id}" name="item${type}${i}" value="1" >
                 <i></i>
                 <span>${tag_name}</span>
             </li>`        
@@ -279,13 +280,11 @@ class Game {
         for (let i = 0; i < tags.length; i++) {
             if (tags[i].checked) {
                 switch (tags[i].getAttribute('value')) {
-                    case '-1': tags_exclude.push(tags[i].getAttribute('tag_name'));
-                    case '1': tags_include.push(tags[i].getAttribute('tag_name'));
+                    case '-1': tags_exclude.push(Number(tags[i].getAttribute('tag_id')));
+                    case '1': tags_include.push(Number(tags[i].getAttribute('tag_id')));
                 }
             }
-        }
-        console.log(tags_include);
-        console.log(tags_exclude);
+        }       
 
         return { "tags_include": tags_include, "tags_exclude": tags_exclude }
     }

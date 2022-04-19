@@ -143,7 +143,9 @@ class Card {
 class Card_set {
     // методы класса
     constructor(cards, tags) {
+        // dict {card.id: card object}
         this.cards = cards.cards;
+        //array of card.id 
         this.order = cards.order;
         this.tags = tags;
         this.current_card_number = 0;
@@ -212,6 +214,7 @@ class Game {
         this.card_set = undefined;
         this.is_front_side = true;
         this.tags = undefined;
+        this.user_tags = undefined;
         this.selected_tags = undefined;
         this.touchStart = null; //Точка начала касания
         this.touchStart = null; //Текущая позиция
@@ -224,6 +227,7 @@ class Game {
             .then(result => {
                 console.log(result)
                 this.tags = result.tags;
+                this.user_tags = result.user_tags;
                 this.new_game()
             })
     }
@@ -232,25 +236,35 @@ class Game {
         this.card_set.update_card(card_id,card_data)
         this.update_game() 
     }
- 
-    new_game() {
-        var tags_list_body = "";
-        for (let i = 0; i < this.tags.length; i++) {
-            const tag_name = this.tags[i].name;
+
+    get_tags_html(tags, type, column_name){
+        let tags_list_body = `<div> ${column_name}</div>`;
+        for (let i = 0; i < tags.length; i++) {
+            const tag_name = tags[i].name;
             tags_list_body += ` 
-            <li class="tristate tristate-switcher list-group-item">
-                <input type="radio" id="item1-state-off" class="tag-picker" tag_name="${tag_name}" name="item${i}" value="-1">
-                <input type="radio" id="item1-state-null" class="tag-picker" tag_name="${tag_name}" name="item${i}" value="0" checked>
-                <input type="radio" id="item1-state-on" class="tag-picker" tag_name="${tag_name}" name="item${i}" value="1">
+            <li class="tristate tristate-switcher list-group-item  ">
+                <input type="radio" class="tag-picker" tag_name="${tag_name}" name="item${type}${i}" value="-1" >
+                <input type="radio" class="tag-picker" tag_name="${tag_name}" name="item${type}${i}" value="0" checked >
+                <input type="radio" class="tag-picker" tag_name="${tag_name}" name="item${type}${i}" value="1" >
                 <i></i>
                 <span>${tag_name}</span>
-            </li>`
+            </li>`        
         }
+        return tags_list_body
+    }
+ 
+    new_game() {
+        let tags_list_body = "<div class=columns-container>";
+        if (this.user_tags.length > 0){
+            tags_list_body += "<div class=column-in-container> "
+            tags_list_body+= this.get_tags_html(this.user_tags, 'user_tags','Personal tags') + '</div>';
+        }
+
+        tags_list_body += "<div class=column-in-container>" + this.get_tags_html(this.tags,'tags','Common tags') + '</div></div>';
+        
         this.container.innerHTML = `
-                                    <div><span style="text-align: center"><h3>Select tags</h3> </span>
-                                    <ul class="list-group">
-                                    ${tags_list_body}
-                                    </ul>
+                                    <div><span style="text-align: center"><h3>Select tags</h3> </span>                                    
+                                    ${tags_list_body}                                    
                                     <div style="text-align: center; padding:10px" > <button class="btn btn-primary game-control" id = 'start-game-btn'><h1> start game </h1></button> </div>
                                     </div>`
         document.querySelector('#start-game-btn').onclick = function () { game.start() };
@@ -258,7 +272,6 @@ class Game {
    
 
     get_selected_tags() {
-
         const tags = document.querySelectorAll(".tag-picker");
         let tags_include = [];
         let tags_exclude = [];

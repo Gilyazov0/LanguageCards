@@ -40,4 +40,15 @@ body, html
     justify-content:space-between;
     align-items: center;
 }
+
+.columns-container{
+    display: flex; 
+    flex-direction:row; 
+}
+
+.column-in-container{
+    display: flex;
+    flex-direction: column;
+    flex: auto ;
+}
  

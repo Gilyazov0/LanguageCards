@@ -267,8 +267,9 @@ class Game {
                                     <div class="alert alert-primary" id="lable-cards-count" > <h1>Number of cards in game</h1></div> 
                                     <div>                                   
                                     ${tags_list_body}  
-                                                                     
-                                    <div style="text-align: center; padding:10px" > <button class="btn btn-primary game-control" id = 'start-game-btn'><h1> start game </h1></button> </div>
+                                    <div class="alert alert-primary" style="padding:10px">                                  
+                                    <div style="text-align: center" > <button class="btn btn-primary game-control" id = 'start-game-btn'><h1> start game </h1></button> </div>
+                                    </div>
                                     </div>`
 
     

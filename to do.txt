@@ -1,0 +1,8 @@
++1. Разобраться что за параметр green        
+        this.container.addEventListener("touchend", function (e) { game.TouchEnd(e, "green"); });
++2. перенести в Card из Game.show_new_card(direction) анимацию перемещени
++3. Game.show_new_card() убрать  game.active_card_obj = undefined; через создание нового метода Game.get_next_card
+4. перенести is_front_side в Card
+5. минимизировать использование document в queryselector
+6. проверить все AddEventListener
+7. перенести CardSet и Card в отдельный модуль Исключить обращение к глобальной переменной

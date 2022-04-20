@@ -40,65 +40,55 @@
   transform: rotateY(180deg);
 }
 
-.move-right {
-    animation-name: move_right;
+.move_out_to-right {
+    animation-name: move_out_to-right;
     animation-duration: 1s;
 
 }
-@keyframes move_right {
+@keyframes move_out_to-right {
     from {
-      transform: translateX(0%);
-      
-    }
-  
+      transform: translateX(0%);     
+    }  
     to {
         transform: translateX(100%);
        }
   }
 
-.move-left {     
-    animation-name: move_left;
+.move_out_to-left {     
+    animation-name: move_out_to-left;
     animation-duration: 1s;
-
 }
 
-@keyframes move_left{
+@keyframes move_out_to-left {
     from {
-      transform: translateX(0%);
-      
-    }
-  
+      transform: translateX(0%);      
+    } 
     to {
         transform: translateX(-100%);
        }
   }
-.position-right {
-    /*transform: translateX(-50%);*/
-    animation-name: position_right;
+
+.move_in_from-right {
+    animation-name: move_in_from-right;
     animation-duration: 1s;
 }
-
-@keyframes position_right {
+@keyframes move_in_from-right {
     from {
       transform: translateX(-100%);
-      
-    }
-  
+    } 
     to {
         transform: translateX(0%);
        }
   }
 
-.position-left {
-    /*transform: translateX(-50%);*/
-    animation-name: position_left;
-    animation-duration: 1s;
+.move_in_from-left {
+  animation-name: move_in_from-left;
+  animation-duration: 1s;
 }
 
-@keyframes position_left {
+@keyframes move_in_from-left {
     from {
-      transform: translateX(+100%);
-      
+      transform: translateX(+100%);     
     }
   
     to {

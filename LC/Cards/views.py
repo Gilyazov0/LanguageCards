@@ -105,7 +105,7 @@ def get_cards(request):
 
     result = {}
     cards = Card.objects.filter(tags__id__in=tags_include).exclude(
-        tags__id__in=tags_exclude)
+        tags__id__in=tags_exclude).distinct()
     cards_dict = {}
     cards_order = []
     for card in cards:        

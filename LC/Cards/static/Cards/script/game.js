@@ -14,11 +14,30 @@ class Card {
         return this.card_data.id;
     }
 
+    show_side(is_front_side, instantly = false) {       
+                
+        let card = document.querySelector('#card-holder' + this.get_id())
+        if (is_front_side) {
+            card.className = instantly? 'rotate-instantly0': 'rotate0';
+            
+        }
+        else {
+            card.className = instantly? 'rotate-instantly180': 'rotate180';
+            
+        }
+
+    }
+
     show(is_front_side) {
         if (this.container != null) {
-            this.container.innerHTML = this.getHTML(is_front_side);
-            const tag_selector = this.container.querySelector("#card_tag_selector" + this.get_id());
-            tag_selector.addEventListener("change", function (e) 
+            this.container.innerHTML = this.getHTML();
+            if (!is_front_side){                
+                this.show_side(is_front_side,true) 
+            }
+            
+            const tag_selectors = this.container.querySelectorAll("#card_tag_selector" + this.get_id());
+            for (let i=0; i < tag_selectors.length; i++){
+                tag_selectors[i].addEventListener("change", function (e) 
             {   
                 const element = e.target;
                 const card_id = element.getAttribute("card_id");
@@ -29,11 +48,12 @@ class Card {
                     body: JSON.stringify({'tag_id':tag_id,'card_id':card_id})
                 })
                     .then(response => response.json())
-                    .then(result => {
-                        game.update_card(card_id,result)
-                        console.log(result)
+                    .then(result => {                           
+                            game.update_card(card_id,result) 
                 })
             })
+            }
+            
             const tag_elements =  this.container.querySelectorAll(".card_tag_item" );
             for (let i = 0; i < tag_elements.length; i++) {
                 tag_elements[i].addEventListener("click", function (e) {
@@ -47,13 +67,11 @@ class Card {
                     })
                         .then(response => response.json())
                         .then(result => {
-                            game.update_card(card_id,result)
-                            console.log(result)
+                            game.update_card(card_id,result)                           
+                                                    
                     })
                 })  
-            }
-            
-
+            }          
         }
     }
 
@@ -70,11 +88,11 @@ class Card {
 
 
 
-    getHTML(front = true) {
+    getHTML() {
 
         let result = `<div id="card-holder${this.get_id()}" style ="text-align:center">`;
 
-        const sides = [front, !front]
+        const sides = [true, false]
         for (let i = 0; i < sides.length; i++) {
 
             let attributes = (sides[i]) ? this.front : this.back;
@@ -155,8 +173,7 @@ class Card_set {
     }
 
     update_card(card_id,card_data) {
-        this.cards[Number(card_id)] = card_data;
-    
+        this.cards[Number(card_id)] = card_data;          
     }
 
 
@@ -297,24 +314,25 @@ class Game {
                 )
                     .then(response => response.json())
                     .then(result => {
-                        
+
                         const card_count = result.cards.order.length;
                         const lable = document.querySelector("#lable-cards-count")
-                        if (card_count ==0){
-                            if (this.selected_tags.tags_exclude.length > 0 || this.selected_tags.tags_include.length > 0){
-                                lable.innerHTML=`<h1>No cards found</h1>`
-                                lable.className = "alert alert-warning"
+                        if (lable != null) {
+                            if (card_count == 0) {
+                                if (this.selected_tags.tags_exclude.length > 0 || this.selected_tags.tags_include.length > 0) {
+                                    lable.innerHTML = `<h1>No cards found</h1>`
+                                    lable.className = "alert alert-warning"
+                                }
+                                else {
+                                    lable.innerHTML = `<h1>Select cards</h1>`
+                                    lable.className = "alert alert-primary"
+                                }
                             }
-                            else{
-                                lable.innerHTML=`<h1>Select cards</h1>`
-                                lable.className = "alert alert-primary"                           
-                            }                
+                            else {
+                                lable.innerHTML = `<h1>Selected ${card_count} cards</h1>`
+                                lable.className = "alert alert-primary"
+                            }
                         }
-                        else{
-                            lable.innerHTML=`<h1>Selected ${card_count} cards</h1>`
-                            lable.className = "alert alert-primary"
-                        }                      
-                         
                     })
 
     }
@@ -417,17 +435,10 @@ class Game {
         this.show_new_card('right');
     }
 
-    reverse_card() {
+    reverse_card(instantly = false) {
         this.is_front_side = !this.is_front_side;
         let cardobject = this.card_set.get_card(this.card_set.current_card_number);
-        let card = document.querySelector('#card-holder' + cardobject.get_id())
-        if (this.is_front_side) {
-            card.className = ' rotate0';
-        }
-        else {
-            card.className = 'rotate180';
-        }
-
+        cardobject.show_side(this.is_front_side,false)
     }
     update_game() {
         const card_set = this.card_set;

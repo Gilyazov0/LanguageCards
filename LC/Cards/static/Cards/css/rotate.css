@@ -14,6 +14,18 @@
     
 }
 
+.rotate-instantly0{
+  transform: rotateY(0deg); 
+  transform-style: preserve-3d;
+  perspective: 1000px;
+}
+
+.rotate-instantly180{
+  transform: rotateY(180deg);  
+  transform-style: preserve-3d;
+  perspective: 1000px;
+}
+
 .flip-card-back {   
   -webkit-backface-visibility: hidden; /* Safari */
   backface-visibility: hidden;

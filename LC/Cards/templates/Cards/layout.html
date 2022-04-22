@@ -17,7 +17,7 @@
 
 <body>
     <nav class="navbar navbar-expand-md  navbar-light bg-light">
-        <div class="navbar-collapse collapse w-100 order-1 order-md-0 dual-collapse2">
+        <div class="navbar-expand  ">
             <ul class="navbar-nav mr-auto">
                 <li class="nav-item active">
                     <a class="btn btn-link" href="{% url 'Cards:game' %}">New game</a>
@@ -28,7 +28,12 @@
                 </li>
                 <li class="nav-item">
                     <a class="btn btn-link" href="{% url 'Cards:logout' %}">Logout</a>
+                </li>            
+           
+                <li class="nav-item">
+                    <a class="btn btn-link" href="{% url 'Cards:new_card' %}">New card</a>
                 </li>
+            
                 {% else %}
 
                 <li class="nav-item">
@@ -41,14 +46,10 @@
                             <a class="btn btn-link" href="{% url 'Cards:registration' %}">Sign Up</a>
                         </div>
                     </form>
-                </li>
+                </li>           
+                
                 {% endif %}
             </ul>
-            <ul class="navbar-nav ml-auto">
-                <li class="nav-item">
-                    <a class="btn btn-link" href="{% url 'Cards:new_card' %}">New card</a>
-                </li>
-            </ul>    
         </div>
     </nav>
 

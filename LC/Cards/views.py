@@ -180,15 +180,16 @@ def card_profile(request, card_id):
 
 def new_card(request):
     is_card_created = False
-    if request.method == "POST":
-        card = Card.objects.create()
-        form = CardForm(request.POST, user = request.user,instance=card)
+    if request.method == "POST":        
+        form = CardForm(request.POST, user = request.user)
         if form.is_valid():
             card = form.save()
             is_card_created = True
-    New_card = Card.objects.create()
+   
+    initial = {}    
     if is_card_created:
-        for tag in card.tags.all():
-            New_card.tags.add(tag)
-    form = CardForm(instance=New_card, user =request.user)    
+        initial['common_tags'] = [t.pk for t in card.tags.filter(user = None)]
+        initial['user_tags'] = [t.pk for t in card.tags.filter(user = request.user)]
+
+    form = CardForm( user =request.user,initial = initial)    
     return render(request, 'Cards/new_card.html', {'form': form})

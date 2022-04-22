@@ -58,12 +58,14 @@ class Card {
         }
 
         const card_titles = this.container.querySelectorAll('.card-title');
-            for(let i=0;i<card_titles.length; i++){
-                card_titles[i].onclick = function () { game.reverse_card() };
+        for(let i=0;i<card_titles.length; i++){
+            card_titles[i].onclick = function () { game.reverse_card() };
             }
         
-        const card_menu = this.container.querySelector("#card_menu");
-        card_menu.onclick = OpenUrlInNewWindow;
+        const card_menu = this.container.querySelectorAll(".card_menu");
+        for(let i=0;i<card_menu.length; i++){
+            card_menu[i].onclick = OpenUrlInNewWindow;
+        }
     }
 
     _tag_onclick(event) {
@@ -121,7 +123,7 @@ class Card {
 
             let header = '';
             if (this.card_set != null) {
-                header = `<span id = 'card_menu' URL = '/Cards/card_profile/${this.get_id()}/'>${this.card_set.get_card_number(this) + 1}/${this.card_set.cards_count()}</span>`
+                header = `<span class = 'card_menu' URL = '/Cards/card_profile/${this.get_id()}/'>${this.card_set.get_card_number(this) + 1}/${this.card_set.cards_count()}</span>`
             }
 
             let body = '';

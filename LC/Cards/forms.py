@@ -31,6 +31,7 @@ class CardForm(forms.ModelForm):
         for fa in face_attributes:
             field_name = 'fa_' + str(fa.id)
             fields[field_name] = forms.CharField(max_length=50, label=fa.name,required=False)   
+            sorted_fields.append(field_name)
 
         if kwargs.get('instance'):
           
@@ -44,7 +45,7 @@ class CardForm(forms.ModelForm):
                     initial[field_name] = ''                    
                 else:
                     initial[field_name] = fa_value[0].value        
-                sorted_fields.append(field_name)
+               
             
             initial['common_tags'] = [t.pk for t in card.tags.filter(user = None)]
             initial['user_tags'] = [t.pk for t in card.tags.filter(user = user)]

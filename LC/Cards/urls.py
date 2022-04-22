@@ -18,4 +18,5 @@ urlpatterns = [
      path(route='create_tag', view=views.create_tag, name='create_tag'),      
      path(route='delete_tag', view=views.delete_tag, name='delete_tag'),
      path('card_profile/<int:card_id>/', views.card_profile, name='card_profile'),      
-     ]  + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT) 
+     path('new_card/', views.new_card, name='new_card'),  
+    ]  + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT) 

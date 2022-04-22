@@ -1,8 +1,9 @@
 from django.urls import reverse
 from xmlrpc.client import ResponseError
 from django.shortcuts import get_object_or_404, render
-from django.http import HttpResponseRedirect, JsonResponse
+from django.http import HttpResponseRedirect, JsonResponse, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
+from requests import Response
 from .models import Card, Tag, FA_value
 from random import shuffle
 import json
@@ -165,15 +166,31 @@ def delete_card_tag(request):
     return JsonResponse(card.serialize(request.user), safe=False)
 
 def card_profile(request, card_id):
-    card = Card.objects.get(pk = card_id)
+    card = get_object_or_404(Card,pk = card_id)
     if request.method == "POST":
-        form = CardForm(request.POST, user = request.user,instance=card)
-        if form.is_valid():
-            form.save()
+        if request.POST['action'] == 'Save':
+            form = CardForm(request.POST, user = request.user,instance=card)
+            if form.is_valid():
+                form.save()
+        if request.POST['action'] == 'Delete':
+            card.delete()
+            return HttpResponse("Card succesfully deleted")
     else:
         form = CardForm(instance=card, user =request.user)    
 
     return render(request, 'Cards/card_profile.html', {'form': form, 'card_id': card_id})
 
-
-
+def new_card(request):
+    is_card_created = False
+    if request.method == "POST":
+        card = Card.objects.create()
+        form = CardForm(request.POST, user = request.user,instance=card)
+        if form.is_valid():
+            card = form.save()
+            is_card_created = True
+    New_card = Card.objects.create()
+    if is_card_created:
+        for tag in card.tags.all():
+            New_card.tags.add(tag)
+    form = CardForm(instance=New_card, user =request.user)    
+    return render(request, 'Cards/new_card.html', {'form': form})

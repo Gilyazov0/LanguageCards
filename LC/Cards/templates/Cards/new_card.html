@@ -2,28 +2,16 @@
 {% load static %}
 {% block script %}     
 <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
-<script>
-    function get_confirmation() {
-    if (confirm("Are you sure?")) {
-        return true;
-    } else {
-        return false;
-    }
-    }
-</script>
 {% endblock %}
 
 {% block title %} Card profile {% endblock %}
 {% block content %}
 {% load crispy_forms_tags %}  
-<form action="{% url 'Cards:card_profile' card_id %}" method="post">
+<form action="{% url 'Cards:new_card'%}" method="post">
     {% csrf_token %}
     
     {{  form|crispy }}
 
-    <input class="btn btn-primary" name="action" type="submit" value="Save">
-    <input onclick="return get_confirmation();" class="btn btn-danger" name="action" type="submit" value="Delete">
-  
-
+    <input class="btn btn-primary" type="submit" value="Save">
 </form>
 {% endblock %}

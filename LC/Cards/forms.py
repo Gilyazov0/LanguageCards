@@ -1,7 +1,8 @@
 from argparse import ArgumentError
 import django.forms as forms
+from sqlalchemy import false, true
 from .models import *
-from crispy_forms import FormHelper
+from crispy_forms.helper import FormHelper
 
 
 class CardForm(forms.ModelForm):
@@ -11,7 +12,11 @@ class CardForm(forms.ModelForm):
     
     
     def __init__(self, *args, **kwargs):
-       
+        self.helper = FormHelper()
+        self.helper.form_id = 'id-exampleForm'
+        self.helper.form_class = 'blueForms'
+         
+         
         fields = {}
         sorted_fields = []
 
@@ -19,14 +24,14 @@ class CardForm(forms.ModelForm):
         if kwargs.get('user'):
             user = kwargs.pop('user')
             fields ['common_tags'] = forms.ModelMultipleChoiceField(queryset= Tag.objects.filter(user =None))
-            fields ['user_tags'] = forms.ModelMultipleChoiceField(queryset= Tag.objects.filter(user =user))
+            fields ['user_tags'] = forms.ModelMultipleChoiceField(queryset= Tag.objects.filter(user =user),required=False)
         else:
             raise ArgumentError('key argument user is required')
 
         face_attributes = Face_attribute.objects.all()
         for fa in face_attributes:
             field_name = 'fa_' + str(fa.id)
-            fields[field_name] = forms.CharField(max_length=50, label=fa.name)   
+            fields[field_name] = forms.CharField(max_length=50, label=fa.name,required=False)   
 
         if kwargs.get('instance'):
           

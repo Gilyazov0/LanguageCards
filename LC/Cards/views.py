@@ -11,7 +11,6 @@ from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.models import User
 from .forms import *
 
-from django.forms import inlineformset_factory,formset_factory
  
 
 def login_request(request):

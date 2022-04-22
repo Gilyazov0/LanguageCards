@@ -1,6 +1,5 @@
 from argparse import ArgumentError
 import django.forms as forms
-from sqlalchemy import false, true
 from .models import *
 from crispy_forms.helper import FormHelper
 

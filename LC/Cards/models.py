@@ -76,4 +76,4 @@ class FA_value (models.Model):
     value = models.CharField(max_length=100, null=False)
 
     def __str__(self):
-        return f"{self.card.id}.{self.FA} = {self.value}"
+        return  '!!!'#f"{self.card.id}.{self.FA} = {self.value}"

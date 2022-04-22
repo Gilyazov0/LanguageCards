@@ -3,13 +3,16 @@ from xmlrpc.client import ResponseError
 from django.shortcuts import get_object_or_404, render
 from django.http import HttpResponseRedirect, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-from .models import Card, Tag
+from .models import Card, Tag, FA_value
 from random import shuffle
 import json
 from django.shortcuts import render, redirect
 from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.models import User
+from .forms import *
 
+from django.forms import inlineformset_factory,formset_factory
+ 
 
 def login_request(request):
     context = {}
@@ -160,3 +163,17 @@ def delete_card_tag(request):
             card.tags.remove(tag)
             card.save()
     return JsonResponse(card.serialize(request.user), safe=False)
+
+def card_profile(request, card_id):
+    card = Card.objects.get(pk = card_id)
+    if request.method == "POST":
+        form = CardForm(request.POST, user = request.user,instance=card)
+        if form.is_valid():
+            form.save()
+    else:
+        form = CardForm(instance=card, user =request.user)    
+
+    return render(request, 'Cards/card_profile.html', {'form': form, 'card_id': card_id})
+
+
+

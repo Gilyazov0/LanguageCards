@@ -6,3 +6,9 @@
 5. минимизировать использование document в queryselector
 6. проверить все AddEventListener
 7. перенести CardSet и Card в отдельный модуль Исключить обращение к глобальной переменной
+8 разобраться с причиной зацикливания медода __str__ при сохранении через get_or_create in forms.py
+
+ for fa in face_attributes:
+                field_name = 'fa_' + str(fa.id)  
+                a = FA_value.objects.filter(FA = fa, card = instance)   
+                #fa_value_instance = FA_value.objects.get_or_create(FA__id = fa.id, card = instance)         

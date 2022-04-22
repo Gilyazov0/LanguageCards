@@ -1,5 +1,12 @@
 var game
 
+function OpenUrlInNewWindow(event){
+    const element = event.target;
+    const url = element.getAttribute("URL");
+    window.open(url, '_blank').focus();
+
+   }
+
 //Игровая карта. Хранит данные карты в виде сырых данных JSON
 class Card {
     constructor(card_data, front, back, card_set = null, show_tags = true, container = null) {
@@ -50,10 +57,13 @@ class Card {
             tag_elements[i].onclick = this._tag_onclick
         }
 
-        let card_titles = this.container.querySelectorAll('.card-title');
+        const card_titles = this.container.querySelectorAll('.card-title');
             for(let i=0;i<card_titles.length; i++){
                 card_titles[i].onclick = function () { game.reverse_card() };
-            }  
+            }
+        
+        const card_menu = this.container.querySelector("#card_menu");
+        card_menu.onclick = OpenUrlInNewWindow;
     }
 
     _tag_onclick(event) {
@@ -111,7 +121,7 @@ class Card {
 
             let header = '';
             if (this.card_set != null) {
-                header = (this.card_set.get_card_number(this) + 1) + '/' + this.card_set.cards_count()
+                header = `<span id = 'card_menu' URL = '/Cards/card_profile/${this.get_id()}/'>${this.card_set.get_card_number(this) + 1}/${this.card_set.cards_count()}</span>`
             }
 
             let body = '';

@@ -1,8 +1,8 @@
 {% extends 'Cards/layout.html' %}
 {% load static %}
 {% block script %}  
-    <script src="{% static 'Cards/script/game.js' %}"> </script>  
-
+    <script type="module" src="{% static 'Cards/script/card_set.js' %}"></script>
+    <script type="module" src="{% static 'Cards/script/game.js' %}"> </script>  
 {% endblock %}
 {% block title %} Game {% endblock %}
 {% block content %}

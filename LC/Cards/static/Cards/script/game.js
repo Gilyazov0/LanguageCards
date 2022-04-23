@@ -4,22 +4,31 @@ function OpenUrlInNewWindow(event){
     const element = event.target;
     const url = element.getAttribute("URL");
     window.open(url, '_blank').focus();
-
    }
 
 //Игровая карта. Хранит данные карты в виде сырых данных JSON
 class Card {
-    constructor(card_data, front, back, card_set = null, show_tags = true, container = null) {
+    constructor(card_data, front, back, card_set, show_tags = true, container = null) {
         this.card_data = card_data;
-        this.front = front;
-        this.back = back;
+        this.front = front; //[fron face attr]
+        this.back = back; //[back face attr]
         this.show_tags = show_tags;
         this.card_set = card_set;
         this.container = container;
+        this.side_is_front = true
     }
     get_id() {
         return this.card_data.id;
     }
+
+    get_data(){
+        return this.card_data
+    }
+    set_data(data){
+        this.card_data = data
+        this.card_set.update_card(this.get_id(),this.card_data)
+    }
+
 
     show_side(is_front_side, instantly = false) {     
         let card = this.container.querySelector('#card-holder' + this.get_id())
@@ -50,11 +59,13 @@ class Card {
         const tag_selectors = this.container.querySelectorAll("#card_tag_selector" + this.get_id());
         for (let i = 0; i < tag_selectors.length; i++) {
             tag_selectors[i].onchange=this._tag_selector_onchange
+            tag_selectors[i].card = this
         }
 
         const tag_elements = this.container.querySelectorAll(".card_tag_item");
         for (let i = 0; i < tag_elements.length; i++) {
             tag_elements[i].onclick = this._tag_onclick
+            tag_elements[i].card = this
         }
 
         const card_titles = this.container.querySelectorAll('.card-title');
@@ -68,38 +79,42 @@ class Card {
         }
     }
 
+     
     _tag_onclick(event) {
-        const element = event.target;
-        const card_id = element.getAttribute("card_id");
-        const tag_id = element.getAttribute("tag_id");
-
+        const card = event.target.card;
+        const tag_id = event.target.getAttribute("tag_id");
+   
         fetch('../delete_card_tag', {
             method: 'POST',
-            body: JSON.stringify({ 'tag_id': tag_id, 'card_id': card_id })
+            body: JSON.stringify({ 'tag_id':tag_id, 'card_id': card.get_id()})
         })
-            .then(response => response.json())
+            .then(
+                response => response.json()
+            )
             .then(result => {
-                game.update_card(card_id, result)
-
-            })
+                const card = this.card; 
+                card.set_data(result);
+                card.show(game.is_front_side)
+            })        
     }
 
-    _tag_selector_onchange(event){
-        {
-            const element = event.target;
-            const card_id = element.getAttribute("card_id");
-            const tag_id = element.value;
-
-            fetch('../set_card_tag', {
-                method: 'POST',
-                body: JSON.stringify({ 'tag_id': tag_id, 'card_id': card_id })
-            })
-                .then(response => response.json())
-                .then(result => {
-                    game.update_card(card_id, result)
-                })
-        }
-    }    
+    _tag_selector_onchange(event) {
+        const card = event.target.card;
+        const tag_id =event.target.value;
+   
+        fetch('../set_card_tag', {
+            method: 'POST',
+            body: JSON.stringify({ 'tag_id':tag_id, 'card_id': card.get_id()})
+        })
+            .then(
+                response => response.json()
+            )
+            .then(result => {
+                const card = this.card; 
+                card.set_data(result);
+                card.show(game.is_front_side)
+            })        
+    }
 
     _tags_to_string(tags, class_ = '') {
         let result = ''
@@ -253,8 +268,8 @@ class Game {
             })
     }
     
-    update_card(card_id,card_data) {
-        this.card_set.update_card(card_id,card_data);
+    update_card(card) {
+        this.card_set.update_card(card.get_id(),card.get_data());
         this.update_game(); 
     }
 

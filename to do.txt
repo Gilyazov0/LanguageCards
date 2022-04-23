@@ -12,3 +12,4 @@
                 field_name = 'fa_' + str(fa.id)  
                 a = FA_value.objects.filter(FA = fa, card = instance)   
                 #fa_value_instance = FA_value.objects.get_or_create(FA__id = fa.id, card = instance)         
+9 поправить нав бар

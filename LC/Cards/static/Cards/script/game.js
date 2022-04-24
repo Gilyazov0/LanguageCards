@@ -1,4 +1,4 @@
-import {Card_set,Card } from './card_set.js'
+import {Card_set,Card, Tag_selector } from './card_set.js'
 
 var game
 
@@ -16,6 +16,7 @@ class Game {
         this.touchStart = null; //Точка начала касания
         this.touchStart = null; //Текущая позиция
         this.active_card_container = undefined; //DOM элемент содержащий текущую карту
+        this.tag_selectors = []; // [{'include': Tag_selector, 'exclude': Tag_selector}, {same} ....]
        
 
         fetch('../get_tags', {
@@ -48,7 +49,37 @@ class Game {
         }
         return tags_list_body
     }
- 
+    show_selectors() {
+        for (let i = 0; i < this.tag_selectors.length; i++){
+            this.tag_selectors[i]['include'].show();
+            this.tag_selectors[i]['exclude'].show();
+        } 
+
+    }
+    add_selectors() {
+        let selectors = {}
+        selectors['include'] = new Tag_selector(this.user_tags,this.tags);
+        selectors['exclude'] = new Tag_selector(this.user_tags,this.tags);
+        this.tag_selectors.push(selectors)
+        this.update_start_game_page()
+    }
+
+    new_game() {
+        
+        this.container.innerHTML = `
+            <div id ='tag_selectors_container'></div>   
+            <div button class="btn btn-primary" id = 'add-tag-selectors-btn' <h1> start game </h1></button> </div>      
+            <div class="alert alert-primary" style="padding:10px">                                  
+            <div style="text-align: center" > <button class="btn btn-primary game-control" id = 'start-game-btn'><h1> start game </h1></button> </div>
+            </div>`  
+
+        this.add_selectors()
+          
+        this.container.querySelector('#start-game-btn').onclick = function () { game.start() };
+        this.container.querySelector('#add-tag-selectors-btn').onclick = function () { game.add_selectors() };
+        this.update_start_game_page()
+    }
+ /*
     new_game() {
         let tags_list_body = "<div class=columns-container>";
         if (this.user_tags.length > 0){
@@ -79,8 +110,28 @@ class Game {
 
         this.update_start_game_page()
     }
+    */
 
     update_start_game_page(){
+
+        //create containers for selectors
+        let tag_selectors_html ='';
+        for (let i=0;i<this.tag_selectors.length;i++){
+            tag_selectors_html+= `<div class="row" >
+                                 <div class=" col" id='tag_selector_incl_${i}'></div>
+                                 <div class=" col" id='tag_selector_excl_${i}'></div>
+                                 </div>`
+            }
+        const tag_selectors_container = this.container.querySelector('#tag_selectors_container');
+        tag_selectors_container.innerHTML = tag_selectors_html;
+       //assign containers to selectors
+       for (let i=0;i<this.tag_selectors.length;i++){
+            this.tag_selectors[i]['include'].set_container(tag_selectors_container.querySelector('#tag_selector_incl_'+i));
+            this.tag_selectors[i]['exclude'].set_container(tag_selectors_container.querySelector('#tag_selector_excl_'+i));
+            }
+        //finnaly show selectors
+        this.show_selectors();
+        
         this.selected_tags = this.get_selected_tags();        
 
                 fetch('../get_cards', {

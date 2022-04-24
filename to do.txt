@@ -15,3 +15,4 @@
 9 поправить нав бар
 
 +10 в Game.show_new_card убрать newcard.classList.remove('move_in_from-' + direction)
+11. Создание и редактирование общих тегов в юзер интерфейсе

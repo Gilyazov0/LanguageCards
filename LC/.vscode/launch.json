@@ -15,14 +15,5 @@
             "django": true,
             "justMyCode": true
         },
-
-        {
-            "name": "Chrome Debugger - launch",
-            "type": "chrome",
-            "request": "launch",
-            "url": "http://localhost:8000/Cards/",
-            "webRoot": "${workspaceFolder}/Cards/static/Cards",
-            "disableNetworkCache": true
-          }
     ]
 }

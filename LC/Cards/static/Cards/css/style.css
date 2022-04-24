@@ -52,3 +52,19 @@ body, html
     flex: auto ;
 }
  
+.form-check {
+    width: 6rem;  
+  overflow-x:hidden;
+}
+
+.dropdown-menu {
+    padding-left: 10px;
+    padding-right: 10px;
+    margin-left: 10px !important;
+    margin-right: 10px !important;
+    width:100vw;
+    position:absolute;
+    transform:translateX(-100%); 
+      
+}
+

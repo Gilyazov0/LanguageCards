@@ -101,20 +101,29 @@ def game(request):
 
 @csrf_exempt
 def get_cards(request):
-    data = json.loads(request.body)
-    tags_include = data['filter'].get("tags_include", [])
-    tags_exclude = data['filter'].get("tags_exclude", [])
-
-    result = {}
-    cards = Card.objects.filter(tags__id__in=tags_include).exclude(
-        tags__id__in=tags_exclude).distinct()
+    data = json.loads(request.body) #{filter:[{'include':[tag_id, ..], 'exclude':[tag_id, ...]} ...]}
+    filter = data['filter']
+    cards_result = None
+    for tags_pair in filter:
+        cards = Card.objects.all()
+        tags_include = tags_pair.get("include", [])
+        tags_exclude = tags_pair.get("exclude", [])
+        for tag in tags_include:
+            cards = cards.filter(tags__id=tag)
+        for tag in tags_exclude:
+            cards = cards.exclude(tags__id=tag)
+        if cards_result == None:
+            cards_result = cards
+        else:
+            cards_result = cards_result.union(cards)
+        
     cards_dict = {}
     cards_order = []
-    for card in cards:        
+    for card in cards_result:        
         cards_dict[card.id] = card.serialize(request.user)
         cards_order.append(card.id)
     shuffle(cards_order)
-
+    result = {}
     result['cards'] = {'cards': cards_dict, 'order': cards_order}
     result['tags'] = get_tags_dict(request.user)
 
@@ -132,8 +141,11 @@ def get_tags_dict(user):
 
 
 @csrf_exempt
-def get_tags(request):
+def get_metadata(request):
+# return all metadata (data we need to setup a game) of the game. currently tags and FAs    
     result = get_tags_dict(request.user)  
+    result['FAs'] = [FA.serialize() for FA in Face_attribute.objects.all()]
+    
     return JsonResponse(result, safe=False)
 
 @csrf_exempt

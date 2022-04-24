@@ -177,14 +177,21 @@ export class Card {
 
             for (let i = 0; i < attributes.length; i++) {
                 const FA = this.card_data.FAs[attributes[i]]
+                let class_size = 'card-title-bg';
+                if (this.card_data.FAs[attributes[i]].length>'30'){
+                    class_size = 'card-title-sm';
+                }     
+                if (this.card_data.FAs[attributes[i]].length>'20'){
+                    class_size = 'card-title-md';     
+                }
                 if (FA != undefined) {
-                    body += `<h5 class="card-title ">${this.card_data.FAs[attributes[i]]}</h5> \n`;
+                    body += `<h5 class="card-title ${class_size}">${this.card_data.FAs[attributes[i]]}</h5> \n`;
                 }
             }
 
             let footer = ''
             if (show_tags) {
-                footer += this._tags_to_string(tags)
+                footer += this._tags_to_string(tags,'tag_common')
             }
 
             //user_tags selector
@@ -203,7 +210,7 @@ export class Card {
             user_tags_selector += '</select></form>'
 
             let user_tags_string = ` <div style="display: flex; align-items: center;">                                 
-                                        ${this._tags_to_string(card_user_tags,'card_tag_item')} 
+                                        ${this._tags_to_string(card_user_tags,'tag_user card_tag_item')} 
                                         ${user_tags_selector}
                                     </div>
                                   `
@@ -225,15 +232,15 @@ export class Card {
 //Игра. Хранит данные игры (список карты в виде данных JSON)
 export class Card_set {
     // методы класса
-    constructor(cards, tags) {
+    constructor(cards, tags, front, back ) {
         // dict {card.id: card object}
         this.cards = cards.cards;
         //array of card.id 
         this.order = cards.order;
         this.tags = tags;
         this.current_card_number = 0;
-        this.front = ['На русском'];
-        this.back = ['Транскрипция', 'На иврите'];
+        this.front = front;
+        this.back = back;
         this.show_tags = true;
     }
 
@@ -272,41 +279,83 @@ export class Card_set {
 
 
 export class Tag_selector_set{
-    constructor(user_tags, tags,container){
+
+    constructor(user_tags, tags, captions, container){
+        //captions = {'inculde':'caption for includes', 'exclude':'caption for excludes' } 
         this.tags = tags;//[{'name':name,'id': id},{}...]
         this.user_tags = user_tags;//[{'name':name,'id': id},{}...]
-        this.tag_selectors = [] //[{'include': Tag_selector, 'exclude': Tag_selector},{same}...]
-        this.container = container
-
+        this.tag_selectors = [] //[{'include': Tag_selector, 'exclude': Tag_selector},{same}...]        
+        this.onChange = undefined;
+        this.captions = captions;
+        this.set_container(container);
+       
         this.add_tag_selectors_pair()
     }
-    
+ 
+    change(){
+        if (this.onChange != undefined) {
+            this.onChange()
+        }
+    }
+
+    set_container(container){
+        this.container = container;
+        if (container != undefined) {
+            this.container.obj = this;
+        } 
+    }
+
     add_tag_selectors_pair(){
-        ts_pair = {}
-        let container = this.container.querySelector('#tag_selector_incl_' + this.tag_selectors.length)
-        ts_pair['include'] = new Tag_selector(this.user_tags,this.tags, container);
-        container = this.container.querySelector('#tag_selector_excl_' + this.tag_selectors.length)
-        ts_pair['exclude'] = new Tag_selector(this.user_tags,this.tags,container);
+        let ts_pair = {}         
+        ts_pair['include'] = new Tag_selector(this.user_tags,this.tags,this,this.captions['include']);      
+        ts_pair['exclude'] = new Tag_selector(this.user_tags,this.tags,this,this.captions['exclude']);
+        
         this.tag_selectors.push(ts_pair);
+        this.show()
     }
 
     _getHTML(){
         let tag_selectors_html ='';
         for (let i=0;i<this.tag_selectors.length;i++){
             tag_selectors_html+= `<div class="row" >
-                                 <div class=" col" id='tag_selector_incl_${i}'></div>
-                                 <div class=" col" id='tag_selector_excl_${i}'></div>
+                                 <div style = 'display:flex' class=" col flex-column"  id='tag_selector_incl_${i}'></div>
+                                 <div style = 'display:flex' class=" col flex-column" id='tag_selector_excl_${i}'></div>
                                  </div>`
             }
+        let result = `${tag_selectors_html} 
+                  <div button class="btn btn-primary" id = 'add-tag-selectors-btn' <h1> add filter </h1></button> </div>`        
+        return result
     }
 
 
     show(){
-        this.container.innerHTML = this._getHTML()
+        this.container.style.marginBottom ="5px";
+        this.container.innerHTML = this._getHTML()        
         for (let i=0;i<this.tag_selectors.length;i++){
+            let container = this.container.querySelector('#tag_selector_incl_' + i)
+            this.tag_selectors[i]['include'].set_container(container)
             this.tag_selectors[i]['include'].show();
+            container = this.container.querySelector('#tag_selector_excl_' + i)
+            this.tag_selectors[i]['exclude'].set_container(container)
             this.tag_selectors[i]['exclude'].show();
         }
+
+        this.container.querySelector('#add-tag-selectors-btn').onclick = function (event) { 
+            find_nearest_obj(event.target).add_tag_selectors_pair();           
+        };
+
+    }
+// return [{'include':[tag_id, ..], 'exclude':[tag_id, ...]} ...]
+    get_selected_tags(){
+        let result =[]
+        for(let i=0; i< this.tag_selectors.length;i++){
+            let element = {}
+            element['include'] = this.tag_selectors[i]['include'].selected_tags;
+            element['exclude'] = this.tag_selectors[i]['exclude'].selected_tags;
+            result.push(element);
+        }
+        return result;
+
 
     }
 
@@ -314,16 +363,21 @@ export class Tag_selector_set{
 
 
 export class Tag_selector{
-    constructor(user_tags, tags,container=undefined) {
+    constructor(user_tags, tags, tag_selector_set,caption,container=undefined) {
         this.tags = tags;//[{'name':name,'id': id},{}...]
         this.user_tags = user_tags;//[{'name':name,'id': id},{}...]
         this.selected_tags = []; //[tag.id, tag.id....]
         this.all_tags_dict = {} // {tag.id: {'name':name,'id': id}...} tags.id and user_tags.id do not intersect
         this.set_container(container);
+        this.onChange = undefined;
+        this.tag_selector_set = tag_selector_set;
+        this.caption = caption;
         for(let i=0; i < this.tags.length;i++){
+            this.tags[i]['type'] ='common';
             this.all_tags_dict[this.tags[i].id] = this.tags[i]
         }
         for(let i=0; i < this.user_tags.length;i++){
+            this.user_tags[i]['type'] ='user';
             this.all_tags_dict[this.user_tags[i].id] = this.user_tags[i]
         }
     }
@@ -337,7 +391,8 @@ export class Tag_selector{
 
     show(){
 
-        this.container.innerHTML = this._getHTML()        
+        this.container.innerHTML = this._getHTML()     
+        this.container.style.marginBottom = '5px';   
         this._show_selected_tags()
        
         $(this.container).on('click', '.form-check-input', function (e) {              
@@ -364,19 +419,28 @@ export class Tag_selector{
             }
         }
         this._show_selected_tags()
+        if (this.tag_selector_set != undefined){
+            this.tag_selector_set.change()
+        }
+    }
+    _tags_to_html_string() {
+        let result = ''
+        for (let i = 0; i < this.selected_tags.length; i++) {
+            let tag_data = this.all_tags_dict[this.selected_tags[i]]; 
+            let class_ = tag_data['type'];
+            result += `<span class = 'tag_${class_}'>&lt;${tag_data['name']}&gt;</span>`;
+        }
+        return result
     }
 
     _show_selected_tags (){
-        let result = ''
-        for (let i = 0; i < this.selected_tags.length; i++) {
-            result += '<' + this.all_tags_dict[this.selected_tags[i]].name + '>';
-        }
+        let result = this._tags_to_html_string ()
         this.container.querySelector("#selected_tags").innerHTML = result
     }
 
     _getHTML() {
 
-        let result = "<div class='col col-sm-8' id ='selected_tags'></div>"        
+        let result = "<div class='col col-sm-10' id ='selected_tags'></div>"        
         
         let common_tags_html = ''
         for (let i = 0; i < this.tags.length; i++) {
@@ -394,8 +458,9 @@ export class Tag_selector{
                                  ${this.user_tags[i].name}
                                  </label>  </div>`
         }
-        result = "<div class = 'row'>"+result+
-            `<div class="dropdown col col-sm-2 col-sm-2">
+           result = `<div><h4>${this.caption}</h4></div>
+            <div class = 'row bg-light border flex-grow-1'>${result}
+            <div class="dropdown col col-sm-2 col-sm-2">
             <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown">...
                 <span class="caret"></span></button>
             <div class="dropdown-menu keep_open">
@@ -408,7 +473,7 @@ export class Tag_selector{
                     ${common_tags_html}
                 </div>             
             </div>
-        </div>`+"</div>"
+        </div></div>`
 
 
         return result

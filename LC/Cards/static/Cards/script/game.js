@@ -1,4 +1,4 @@
-import {Card_set,Card, Tag_selector } from './card_set.js'
+import {Card_set,Card, Tag_selector,Tag_selector_set } from './card_set.js'
 
 var game
 
@@ -11,15 +11,15 @@ class Game {
         this.card_set = undefined;
         this.tags = undefined; //[{'name':name,'id': id},{}...]
         this.user_tags = undefined;//[{'name':name,'id': id},{}...]
+        this.FAs = undefined;//[FA1_name,FA2_name...]
         this.selected_tags = undefined;
         this.active_card_obj = undefined;
         this.touchStart = null; //Точка начала касания
         this.touchStart = null; //Текущая позиция
         this.active_card_container = undefined; //DOM элемент содержащий текущую карту
-        this.tag_selectors = []; // [{'include': Tag_selector, 'exclude': Tag_selector}, {same} ....]
-       
-
-        fetch('../get_tags', {
+        this.tag_selectors_set = undefined;
+  
+        fetch('../get_metadata', {
             method: 'POST',
             body: JSON.stringify({})
         })
@@ -28,110 +28,52 @@ class Game {
                 console.log(result)
                 this.tags = result.tags;
                 this.user_tags = result.user_tags;
+                this.FAs = result.FAs;
                 this.new_game()
             })
     }
-    
- 
-    get_tags_html(tags, type, column_name){
-        let tags_list_body = `<div> ${column_name}</div>`;
-        for (let i = 0; i < tags.length; i++) {
-            const tag_id = tags[i].id;
-            const tag_name = tags[i].name;
-            tags_list_body += ` 
-            <li class="tristate tristate-switcher list-group-item  ">
-                <input type="radio" class="tag-picker" tag_id="${tag_id}" name="item${type}${i}" value="-1" >
-                <input type="radio" class="tag-picker" tag_id="${tag_id}" name="item${type}${i}" value="0" checked >
-                <input type="radio" class="tag-picker" tag_id="${tag_id}" name="item${type}${i}" value="1" >
-                <i></i>
-                <span>${tag_name}</span>
-            </li>`        
-        }
-        return tags_list_body
-    }
-    show_selectors() {
-        for (let i = 0; i < this.tag_selectors.length; i++){
-            this.tag_selectors[i]['include'].show();
-            this.tag_selectors[i]['exclude'].show();
-        } 
-
-    }
-    add_selectors() {
-        let selectors = {}
-        selectors['include'] = new Tag_selector(this.user_tags,this.tags);
-        selectors['exclude'] = new Tag_selector(this.user_tags,this.tags);
-        this.tag_selectors.push(selectors)
-        this.update_start_game_page()
-    }
-
+     
     new_game() {
         
+        let FA_selector =`
+                 <div> <label><h4>Front side:</h4> </label>
+                     <select id ="FA_selector" class="form-select form-select-sm">
+                        `
+        for (let i = 0; i < this.FAs.length; i++) {
+            FA_selector += `<option value='${this.FAs[i]}'>${this.FAs[i]}</option>`
+        }
+        FA_selector += '</select></div>'
+        this.container.style.padding = "5px";
         this.container.innerHTML = `
+            
+            <div class="alert alert-primary" id="lable-cards-count" > <h1>Number of cards in game</h1></div>
+            <div>${FA_selector}</div> 
             <div id ='tag_selectors_container'></div>   
-            <div button class="btn btn-primary" id = 'add-tag-selectors-btn' <h1> start game </h1></button> </div>      
+               
             <div class="alert alert-primary" style="padding:10px">                                  
             <div style="text-align: center" > <button class="btn btn-primary game-control" id = 'start-game-btn'><h1> start game </h1></button> </div>
             </div>`  
 
-        this.add_selectors()
+        let ts_container =  this.container.querySelector('#tag_selectors_container');
+        let captions = {'include':'Add cards with tags:','exclude':'except cards with tags:'}
+        this.tag_selectors_set = new Tag_selector_set (this.user_tags, this.tags, captions,ts_container);
+        this.tag_selectors_set.onChange = function(){ game.update_start_game_page() };
+        
+        /*let observer = new MutationObserver(function(mutationsList, observer) {
+            console.log(mutationsList);
+            alert('[[f[fdfdfd');
+        });
+        observer.observe(ts_container, {characterData: false, childList: true, attributes: true, subtree: true});*/
           
         this.container.querySelector('#start-game-btn').onclick = function () { game.start() };
-        this.container.querySelector('#add-tag-selectors-btn').onclick = function () { game.add_selectors() };
+       
         this.update_start_game_page()
     }
- /*
-    new_game() {
-        let tags_list_body = "<div class=columns-container>";
-        if (this.user_tags.length > 0){
-            tags_list_body += "<div class=column-in-container> "
-            tags_list_body+= this.get_tags_html(this.user_tags, 'user_tags','Personal tags') + '</div>';
-        }
-
-        tags_list_body += "<div class=column-in-container>" + this.get_tags_html(this.tags,'tags','Common tags') + '</div></div>';
-        
-        this.container.innerHTML = `
-                                    <div class="alert alert-primary" id="lable-cards-count" > <h1>Number of cards in game</h1></div> 
-                                    <div>                                   
-                                    ${tags_list_body}  
-                                    <div class="alert alert-primary" style="padding:10px">                                  
-                                    <div style="text-align: center" > <button class="btn btn-primary game-control" id = 'start-game-btn'><h1> start game </h1></button> </div>
-                                    </div>
-                                    </div>`
-
-    
-        this.container.querySelector('#start-game-btn').onclick = function () { game.start() };
-
-        const tag_pickers = this.container.querySelectorAll(".tag-picker");        
-        for (let i = 0; i < tag_pickers.length; i++) {
-            tag_pickers[i].onchange = function (e) {
-                game.update_start_game_page()
-            }     
-        }
-
-        this.update_start_game_page()
-    }
-    */
+ 
 
     update_start_game_page(){
 
-        //create containers for selectors
-        let tag_selectors_html ='';
-        for (let i=0;i<this.tag_selectors.length;i++){
-            tag_selectors_html+= `<div class="row" >
-                                 <div class=" col" id='tag_selector_incl_${i}'></div>
-                                 <div class=" col" id='tag_selector_excl_${i}'></div>
-                                 </div>`
-            }
-        const tag_selectors_container = this.container.querySelector('#tag_selectors_container');
-        tag_selectors_container.innerHTML = tag_selectors_html;
-       //assign containers to selectors
-       for (let i=0;i<this.tag_selectors.length;i++){
-            this.tag_selectors[i]['include'].set_container(tag_selectors_container.querySelector('#tag_selector_incl_'+i));
-            this.tag_selectors[i]['exclude'].set_container(tag_selectors_container.querySelector('#tag_selector_excl_'+i));
-            }
-        //finnaly show selectors
-        this.show_selectors();
-        
+        //this.tag_selectors_set.show();
         this.selected_tags = this.get_selected_tags();        
 
                 fetch('../get_cards', {
@@ -147,15 +89,9 @@ class Game {
                         const lable = this.container.querySelector("#lable-cards-count")
                         if (lable != null) {
                             if (card_count == 0) {
-                                if (this.selected_tags.tags_exclude.length > 0 || this.selected_tags.tags_include.length > 0) {
-                                    lable.innerHTML = `<h1>No cards found</h1>`
-                                    lable.className = "alert alert-warning"
-                                }
-                                else {
-                                    lable.innerHTML = `<h1>Select cards</h1>`
-                                    lable.className = "alert alert-primary"
-                                }
-                            }
+                                 lable.innerHTML = `<h1>No cards found</h1>`
+                                 lable.className = "alert alert-warning"
+                               }
                             else {
                                 lable.innerHTML = `<h1>Selected ${card_count} cards</h1>`
                                 lable.className = "alert alert-primary"
@@ -163,29 +99,20 @@ class Game {
                         }
                     })
     }
-   
+
 
     get_selected_tags() {
-        const tags = this.container.querySelectorAll(".tag-picker");
-        let tags_include = [];
-        let tags_exclude = [];
-
-        for (let i = 0; i < tags.length; i++) {
-            if (tags[i].checked) {
-                switch (tags[i].getAttribute('value')) {
-                    case '-1': tags_exclude.push(Number(tags[i].getAttribute('tag_id')));
-                    case '1': tags_include.push(Number(tags[i].getAttribute('tag_id')));
-                }
-            }
-        }       
-
-        return { "tags_include": tags_include, "tags_exclude": tags_exclude }
+        return this.tag_selectors_set.get_selected_tags();        
     }
 
 
     start() {
         this.selected_tags = this.get_selected_tags();
 
+        const front_attribute = [this.container.querySelector('#FA_selector').value];
+        let back_attributes = [...this.FAs];
+        back_attributes = back_attributes.filter((value)=>{return value !=front_attribute[0]});
+     
         this.container.innerHTML = `
         <div id = 'current_card'></div>
         <div class = "game-control-bar">    
@@ -206,7 +133,7 @@ class Game {
         this.container.addEventListener("touchend", function (e) { game.TouchEnd(e); });
         //Отмена касания
         this.container.addEventListener("touchcancel", function (e) { game.TouchEnd(e); });
-        
+
         fetch('../get_cards', {
             method: 'POST',
             body: JSON.stringify({
@@ -216,7 +143,7 @@ class Game {
         )
             .then(response => response.json())
             .then(result => {                
-                this.card_set = new Card_set(result.cards, result.tags);
+                this.card_set = new Card_set(result.cards, result.tags, front_attribute, back_attributes);
                 this.update_game()
             })
     }

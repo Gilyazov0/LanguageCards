@@ -65,6 +65,8 @@ class Face_attribute(models.Model):
 
     def __str__(self):
         return self.name
+    def serialize(self):
+        return self.name
 
 
 class FA_value (models.Model):

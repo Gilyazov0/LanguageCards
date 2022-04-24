@@ -1,29 +1,20 @@
 {% extends 'Cards/layout.html' %}
 {% block title %} {{ user.username }} profile {% endblock %}
 {% block content %}
-<div style="max-width: 250px; padding-left: 10px;">
-    <div class="vstack gap-3">
+<div style="max-width: 15rem; padding: 10px;">
         {% for tag in user_tags %}
-        <div class="bg-light border">
-            <form class="form-inline" action="{% url 'Cards:delete_tag' %}" method="post">
+            <form class="form-inline row bg-light border" action="{% url 'Cards:delete_tag' %}" method="post">
                 {% csrf_token %}
-                <div class="input-group">
-                    <input type="hidden" name="tag_id" value=" {{ tag.id }} ">
-                    <label style="align-self: center;">{{ tag.name }}</label>
-                    <button class="btn btn-primary" type="submit" style="margin-left: auto">del</button>
-                </div>
+                <input type="hidden" name="tag_id" value=" {{ tag.id }} ">
+                <label class="col col-sm-9">{{ tag.name }}</label>
+                <button class="btn btn-primary col col-sm-3" type="submit" >del</button>
             </form>
-        </div>
         {% endfor %}
-        <div class="bg-light border">
-            <form class="form-inline" action="{% url 'Cards:create_tag' %}" method="post">
+            <form class="form-inline row bg-light border" action="{% url 'Cards:create_tag' %}" method="post">
                 {% csrf_token %}
-                <div class="input-group">
-                    <input type="text" class="form-control" placeholder="new tag" name="user_tag">
-                    <button class="btn btn-primary" type="submit" style="max-width: 48px;">add</button>
-                </div>
+                <input type="text" class="form-control col col-sm-9" placeholder="new tag" name="user_tag">
+                <button class="btn btn-primary col col-sm-3" type="submit">add</button>
             </form>
-        </div>
-    </div>      
+        </div>    
 </div>
 {% endblock %}

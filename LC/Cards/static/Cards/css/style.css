@@ -40,6 +40,16 @@ body, html
     justify-content:space-between;
     align-items: center;
 }
+.card-title-bg {
+    font-size: 300%;
+}
+.card-title-md {
+    font-size: 200%;
+}
+.card-title-sm {
+    font-size: 100%;
+}
+
 
 .columns-container{
     display: flex; 
@@ -68,3 +78,10 @@ body, html
       
 }
 
+.tag_user{
+    color:red;
+}
+
+.tag_common{
+    color:blue
+}

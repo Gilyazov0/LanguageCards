@@ -194,15 +194,15 @@ export class Card {
 
             for (let i = 0; i < attributes.length; i++) {
                 const FA = this.card_data.FAs[attributes[i]]
-                let class_size = 'card-title-bg';
-                if (this.card_data.FAs[attributes[i]].length>'30'){
-                    class_size = 'card-title-sm';
-                }     
-                if (this.card_data.FAs[attributes[i]].length>'20'){
-                    class_size = 'card-title-md';     
-                }
                 if (FA != undefined) {
-                    body += `<h5 class="card-title ${class_size}">${this.card_data.FAs[attributes[i]]}</h5> \n`;
+                    let class_size = 'card-title-bg';
+                    if (FA.length>'30'){
+                        class_size = 'card-title-sm';
+                    }     
+                    if (FA.length>'20'){
+                        class_size = 'card-title-md';     
+                    }
+                    body += `<h5 class="card-title ${class_size}">${FA}</h5> \n`;
                 }
             }
 

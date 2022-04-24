@@ -1,5 +1,7 @@
 .game-control{
-min-width: 15rem;}
+/*min-width: 15rem;*/
+width:30%;
+}
 
 .game-card{
     width: 96%;

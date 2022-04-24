@@ -37,6 +37,15 @@ export class Card {
         this.is_front_side = true;
         this.container.card=this;
     }
+    static create_without_card_set(card_data, front, back, user_tags, show_tags = true, container = null)
+    {
+        let result = new Card(card_data, front, back, undefined, show_tags, container);
+        let card_set = Card_set.create_from_card(result,user_tags);
+        result.card_set = card_set
+        return result; 
+        
+    }
+
     get_id() {
         return this.card_data.id;
     }
@@ -47,7 +56,9 @@ export class Card {
 
     set_data(data){
         this.card_data = data
-        this.card_set.update_card(this.get_id(),this.card_data)
+        if (this.card_set) {
+            this.card_set.update_card(this.get_id(),this.card_data)
+        }
     }
 
     show_side(instantly = false) {     
@@ -169,9 +180,15 @@ export class Card {
             let card_user_tags = this.card_data.user_tags;
 
             let header = '';
+            let card_number_label = ''
             if (this.card_set != null) {
-                header = `<span class = 'card_menu' URL = '/Cards/card_profile/${this.get_id()}/'>${this.card_set.get_card_number(this) + 1}/${this.card_set.cards_count()}</span>`
+                card_number_label = `${this.card_set.get_card_number(this) + 1}/${this.card_set.cards_count()}`
+            }     
+            else{
+                card_number_label = '1/1'
             }
+            header = `<span class = 'card_menu' URL = '/Cards/card_profile/${this.get_id()}/'>${card_number_label}</span>`
+          
 
             let body = '';
 
@@ -201,10 +218,12 @@ export class Card {
                     <option selected>set tag</option>
                                 `
 
-            // all user_tags of current user                   
-            let game_user_tags = this.card_set.get_user_tags()
-            for (let i = 0; i < game_user_tags.length; i++) {
-                user_tags_selector += `<option value=${game_user_tags[i].id}>${game_user_tags[i].name}</option>`
+            // all user_tags of current user    
+            if (this.card_set != undefined) {
+                let game_user_tags = this.card_set.get_user_tags()
+                for (let i = 0; i < game_user_tags.length; i++) {
+                    user_tags_selector += `<option value=${game_user_tags[i].id}>${game_user_tags[i].name}</option>`
+                }
             }
 
             user_tags_selector += '</select></form>'
@@ -243,7 +262,14 @@ export class Card_set {
         this.back = back;
         this.show_tags = true;
     }
+    static create_from_card(card, tags ) {
+        let cards = {}
+        const id = card.get_id() 
+        cards['cards'] = {id:card}
+        cards['order'] = [id]
 
+        return new Card_set(cards, tags, card.front, card.back)
+    }
     update_card(card_id,card_data) {
         this.cards[Number(card_id)] = card_data;          
     }

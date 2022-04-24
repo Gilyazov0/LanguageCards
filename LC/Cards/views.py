@@ -3,6 +3,7 @@ from xmlrpc.client import ResponseError
 from django.shortcuts import get_object_or_404, render
 from django.http import HttpResponseRedirect, JsonResponse, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
+from sqlalchemy import JSON
 from .models import Card, Tag, FA_value
 from random import shuffle
 import json
@@ -104,10 +105,14 @@ def get_cards(request):
     data = json.loads(request.body) #{filter:[{'include':[tag_id, ..], 'exclude':[tag_id, ...]} ...]}
     filter = data['filter']
     cards_result = None
-    for tags_pair in filter:
+    for index, tags_pair in enumerate(filter):
+        
         cards = Card.objects.all()
         tags_include = tags_pair.get("include", [])
         tags_exclude = tags_pair.get("exclude", [])
+        if index > 0 and len(tags_include)== 0 and len(tags_exclude) == 0:
+            continue
+
         for tag in tags_include:
             cards = cards.filter(tags__id=tag)
         for tag in tags_exclude:
@@ -129,10 +134,11 @@ def get_cards(request):
 
     return JsonResponse(result, safe=False)
 
-def get_tags_dict(user):
+def get_tags_dict(user,add_common_tags = True):
     result = {}
-    tags = Tag.objects.filter(user=None)
-    result['tags'] = [tag.serialize() for tag in tags]
+    if add_common_tags:
+        tags = Tag.objects.filter(user=None)
+        result['tags'] = [tag.serialize() for tag in tags]
     if user.is_authenticated:
         result['user_tags'] = [tag.serialize() for tag in Tag.objects.filter(user=user)]
     else:
@@ -191,17 +197,27 @@ def card_profile(request, card_id):
     return render(request, 'Cards/card_profile.html', {'form': form, 'card_id': card_id})
 
 def new_card(request):
+    message = ''
+    card_data = ''
+    context = {}
     is_card_created = False
     if request.method == "POST":        
         form = CardForm(request.POST, user = request.user)
         if form.is_valid():
             card = form.save()
             is_card_created = True
+            card_data = json.dumps(card.serialize(request.user))
    
     initial = {}    
     if is_card_created:
         initial['common_tags'] = [t.pk for t in card.tags.filter(user = None)]
         initial['user_tags'] = [t.pk for t in card.tags.filter(user = request.user)]
+        message = 'Card succesfully created' 
 
+    context['tags_data'] = json.dumps(get_tags_dict(request.user,False))
+    context['form'] = form 
+    context['message'] = message 
+    context['card_data'] = card_data
+   
     form = CardForm( user =request.user,initial = initial)    
-    return render(request, 'Cards/new_card.html', {'form': form})
+    return render(request, 'Cards/new_card.html', context)

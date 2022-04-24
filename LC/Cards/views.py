@@ -213,10 +213,10 @@ def new_card(request):
         initial['user_tags'] = [t.pk for t in card.tags.filter(user = request.user)]
         message = 'Card succesfully created' 
 
+    form = CardForm( user =request.user,initial = initial)    
     context['tags_data'] = json.dumps(get_tags_dict(request.user,False))
     context['form'] = form 
     context['message'] = message 
     context['card_data'] = card_data
    
-    form = CardForm( user =request.user,initial = initial)    
     return render(request, 'Cards/new_card.html', context)

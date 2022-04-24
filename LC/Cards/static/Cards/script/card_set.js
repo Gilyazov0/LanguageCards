@@ -1,3 +1,24 @@
+
+$(document).ready(function() { //jQuery библиотека скриптов на JS
+    $(document).on('click', '.dropdown-menu', function (e) {
+        if (e.target.classList.contains('keep_open')){
+            e.stopPropagation();
+            e.preventDefault();
+        }
+    }); 
+});
+
+function find_nearest_obj(dom_element){
+    let element = dom_element
+    while (element != document) {
+        if (element.obj != undefined) {
+            return element.obj;
+        }
+        element = element.parentElement;
+    }
+    return undefined;
+}
+
 function OpenUrlInNewWindow(event){
     const element = event.target;
     const url = element.getAttribute("URL");
@@ -249,26 +270,145 @@ export class Card_set {
     }
 }
 
-export class Tag_selector{
-    constructor(user_tags, tags,container ) {
+
+export class Tag_selector_set{
+    constructor(user_tags, tags,container){
         this.tags = tags;//[{'name':name,'id': id},{}...]
         this.user_tags = user_tags;//[{'name':name,'id': id},{}...]
-        this.selected_tags = [];
+        this.tag_selectors = [] //[{'include': Tag_selector, 'exclude': Tag_selector},{same}...]
+        this.container = container
+
+        this.add_tag_selectors_pair()
+    }
+    
+    add_tag_selectors_pair(){
+        ts_pair = {}
+        let container = this.container.querySelector('#tag_selector_incl_' + this.tag_selectors.length)
+        ts_pair['include'] = new Tag_selector(this.user_tags,this.tags, container);
+        container = this.container.querySelector('#tag_selector_excl_' + this.tag_selectors.length)
+        ts_pair['exclude'] = new Tag_selector(this.user_tags,this.tags,container);
+        this.tag_selectors.push(ts_pair);
+    }
+
+    _getHTML(){
+        let tag_selectors_html ='';
+        for (let i=0;i<this.tag_selectors.length;i++){
+            tag_selectors_html+= `<div class="row" >
+                                 <div class=" col" id='tag_selector_incl_${i}'></div>
+                                 <div class=" col" id='tag_selector_excl_${i}'></div>
+                                 </div>`
+            }
+    }
+
+
+    show(){
+        this.container.innerHTML = this._getHTML()
+        for (let i=0;i<this.tag_selectors.length;i++){
+            this.tag_selectors[i]['include'].show();
+            this.tag_selectors[i]['exclude'].show();
+        }
+
+    }
+
+}
+
+
+export class Tag_selector{
+    constructor(user_tags, tags,container=undefined) {
+        this.tags = tags;//[{'name':name,'id': id},{}...]
+        this.user_tags = user_tags;//[{'name':name,'id': id},{}...]
+        this.selected_tags = []; //[tag.id, tag.id....]
+        this.all_tags_dict = {} // {tag.id: {'name':name,'id': id}...} tags.id and user_tags.id do not intersect
+        this.set_container(container);
+        for(let i=0; i < this.tags.length;i++){
+            this.all_tags_dict[this.tags[i].id] = this.tags[i]
+        }
+        for(let i=0; i < this.user_tags.length;i++){
+            this.all_tags_dict[this.user_tags[i].id] = this.user_tags[i]
+        }
+    }
+
+    set_container(container){
         this.container = container;
-        this.container.obj = this;
+        if (container != undefined) {
+            this.container.obj = this;
+        } 
     }
 
     show(){
 
-        this.container.innerHTML = this._getHTML()
+        this.container.innerHTML = this._getHTML()        
+        this._show_selected_tags()
+       
+        $(this.container).on('click', '.form-check-input', function (e) {              
+          const tag_selector = find_nearest_obj(e.target)              
+          if (tag_selector != undefined){
+              tag_selector._update_selected_tags()
+          }
+            
+        }); 
+        
+    }
+    _get_tag_by_id(tag_id){
+         return this.all_tags_dict[tag_id]
+
     }
 
-    _getHTML(){
-        result =''
+    _update_selected_tags() {
+        const tag_selectors = this.container.querySelectorAll(".tag_selector");
+        this.selected_tags = []
+        for (let i = 0; i < tag_selectors.length; i++) {
+            if (tag_selectors[i].checked) {
+                this.selected_tags.push(Number(tag_selectors[i].getAttribute('tag_id_data')))
 
-        for (let i=0; i < this.tags.length;i++){
-            result +='<'+ this.tags[i].name +'>';
+            }
         }
+        this._show_selected_tags()
+    }
+
+    _show_selected_tags (){
+        let result = ''
+        for (let i = 0; i < this.selected_tags.length; i++) {
+            result += '<' + this.all_tags_dict[this.selected_tags[i]].name + '>';
+        }
+        this.container.querySelector("#selected_tags").innerHTML = result
+    }
+
+    _getHTML() {
+
+        let result = "<div class='col col-sm-8' id ='selected_tags'></div>"        
+        
+        let common_tags_html = ''
+        for (let i = 0; i < this.tags.length; i++) {
+            common_tags_html += `<div class="form-check">
+                                     <input type="checkbox" class="form-check-input tag_selector" tag_id_data ='${this.tags[i].id}' id="dropdownCheck${this.tags[i].id}">
+                                     <label class="form-check-label keep_open" for="dropdownCheck${this.tags[i].id}">
+                                     ${this.tags[i].name}
+                                 </label> </div>`
+        }
+        let personal_tags_html = ''
+        for (let i = 0; i < this.user_tags.length; i++) {
+            personal_tags_html += `<div class="form-check">
+                                 <input type="checkbox" class="form-check-input tag_selector" tag_id_data ='${this.user_tags[i].id}' id="dropdownCheck${this.user_tags[i].id}">
+                                 <label class="form-check-label keep_open" for="dropdownCheck${this.user_tags[i].id}">
+                                 ${this.user_tags[i].name}
+                                 </label>  </div>`
+        }
+        result = "<div class = 'row'>"+result+
+            `<div class="dropdown col col-sm-2 col-sm-2">
+            <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown">...
+                <span class="caret"></span></button>
+            <div class="dropdown-menu keep_open">
+                <p class="mb-0  keep_open">Personal tags.</p>
+                <div style="display: flex; justify-content:last baseline; flex-wrap: wrap">
+                    ${personal_tags_html}
+                </div>
+                <p class="mb-0  keep_open">   Common tags. </p>
+                <div style="display: flex; justify-content:last baseline; flex-wrap: wrap">
+                    ${common_tags_html}
+                </div>             
+            </div>
+        </div>`+"</div>"
 
 
         return result

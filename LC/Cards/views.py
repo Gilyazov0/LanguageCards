@@ -3,7 +3,6 @@ from xmlrpc.client import ResponseError
 from django.shortcuts import get_object_or_404, render
 from django.http import HttpResponseRedirect, JsonResponse, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
-from sqlalchemy import JSON
 from .models import Card, Tag, FA_value
 from random import shuffle
 import json

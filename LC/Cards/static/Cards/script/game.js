@@ -18,7 +18,7 @@ class Game {
         this.touchStart = null; //Текущая позиция
         this.active_card_container = undefined; //DOM элемент содержащий текущую карту
         this.tag_selectors_set = undefined;
-  
+
         fetch('../get_metadata', {
             method: 'POST',
             body: JSON.stringify({})
@@ -29,8 +29,12 @@ class Game {
                 this.tags = result.tags;
                 this.user_tags = result.user_tags;
                 this.FAs = result.FAs;
+                let captions = {'include':'Add cards with tags:','exclude':'except cards with tags:'}
+                this.tag_selectors_set =  new Tag_selector_set (this.user_tags, this.tags, captions,);;   
                 this.new_game()
             })
+
+        
     }
      
     new_game() {
@@ -55,8 +59,9 @@ class Game {
             </div>`  
 
         let ts_container =  this.container.querySelector('#tag_selectors_container');
-        let captions = {'include':'Add cards with tags:','exclude':'except cards with tags:'}
-        this.tag_selectors_set = new Tag_selector_set (this.user_tags, this.tags, captions,ts_container);
+        this.tag_selectors_set.set_container(ts_container)
+        this.tag_selectors_set.show()
+        
         this.tag_selectors_set.onChange = function(){ game.update_new_game_page() };
         
         this.container.querySelector('#start-game-btn').onclick = function () { game.start_game() };
@@ -116,7 +121,7 @@ class Game {
         //assumming that "game" is global variable, need to find a way to avoid this.
         this.container.querySelector('#show-prev-card-btn').onclick = function () { game.show_new_card('left') };
         this.container.querySelector('#show-next-card-btn').onclick = function () { game.show_new_card('right') };
-        this.container.querySelector('#reverse-card-btn').onclick = function () { game.active_card_obj.reverse() };
+        this.container.querySelector('#reverse-card-btn').onclick = function () { game.active_card_obj.reverse();};
         //Перехватываем события
         this.container.addEventListener("touchstart", function (e) { game.TouchStart(e); }); //Начало касания
         this.container.addEventListener("touchmove", function (e) { game.TouchMove(e); }); //Движение пальцем по экрану
@@ -240,6 +245,11 @@ class Game {
 
 document.addEventListener('DOMContentLoaded', function () {
     game = new Game(document.querySelector('#game_container'));
+
+    document.querySelector('#new_game_btn').onclick = (e)=> {
+        e.stopPropagation();
+        e.preventDefault();
+        game.new_game()}
 })
 
 

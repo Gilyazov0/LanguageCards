@@ -16,3 +16,5 @@
 
 +10 в Game.show_new_card убрать newcard.classList.remove('move_in_from-' + direction)
 11. Создание и редактирование общих тегов в юзер интерфейсе
+
+12 убрать   this.container.style.marginBottom = '5px'; из метода show в Tag_selector классе и проверить аналогичные проблемы 

@@ -303,10 +303,9 @@ export class Card_set {
     }
 }
 
-
 export class Tag_selector_set{
 
-    constructor(user_tags, tags, captions, container){
+    constructor(user_tags, tags, captions, container=undefined ){
         //captions = {'inculde':'caption for includes', 'exclude':'caption for excludes' } 
         this.tags = tags;//[{'name':name,'id': id},{}...]
         this.user_tags = user_tags;//[{'name':name,'id': id},{}...]
@@ -328,7 +327,7 @@ export class Tag_selector_set{
         this.container = container;
         if (container != undefined) {
             this.container.obj = this;
-        } 
+        }         
     }
 
     add_tag_selectors_pair(){
@@ -355,9 +354,11 @@ export class Tag_selector_set{
 
 
     show(){
+        if(this.container == undefined) return
+        
         this.container.style.marginBottom ="5px";
         this.container.className = "container-fluid"
-        
+
         this.container.innerHTML = this._getHTML()        
         for (let i=0;i<this.tag_selectors.length;i++){
             let container = this.container.querySelector('#tag_selector_incl_' + i)
@@ -383,12 +384,8 @@ export class Tag_selector_set{
             result.push(element);
         }
         return result;
-
-
     }
-
 }
-
 
 export class Tag_selector{
     constructor(user_tags, tags, tag_selector_set,caption,container=undefined) {
@@ -418,23 +415,31 @@ export class Tag_selector{
     }
 
     show(){        
-        this.container.innerHTML = this._getHTML()     
-        this.container.style.marginBottom = '5px';  
-       
-        this._show_selected_tags()
-       
+        this.container.innerHTML = this._getHTML()
+        this.container.style.marginBottom = '5px';
+        
+        this._update_selected_tags_dom()       
+        this._show_selected_tags()       
         $(this.container).on('click', '.form-check-input', function (e) {              
           const tag_selector = find_nearest_obj(e.target)              
           if (tag_selector != undefined){
               tag_selector._update_selected_tags()
-          }
-            
+          }            
         }); 
         
     }
+
     _get_tag_by_id(tag_id){
          return this.all_tags_dict[tag_id]
 
+    }
+
+    _update_selected_tags_dom(){
+        const tag_selectors = this.container.querySelectorAll(".tag_selector");        
+        for (let i = 0; i < tag_selectors.length; i++) {
+            let id = Number(tag_selectors[i].getAttribute('tag_id_data'))             
+            tag_selectors[i].checked=this.selected_tags.includes(id)            
+        } 
     }
 
     _update_selected_tags() {
@@ -450,7 +455,8 @@ export class Tag_selector{
         if (this.tag_selector_set != undefined){
             this.tag_selector_set.change()
         }
-    }
+    }    
+
     _tags_to_html_string() {
         let result = ''
         for (let i = 0; i < this.selected_tags.length; i++) {
@@ -501,12 +507,7 @@ export class Tag_selector{
                     ${common_tags_html}
                 </div>             
             </div>
-        </div></div>`
-
-     //   result = `<div class="container-fluid">${result}</div>`
-
-
-
+        </div></div>`     
         return result
     }
 }

@@ -356,6 +356,8 @@ export class Tag_selector_set{
 
     show(){
         this.container.style.marginBottom ="5px";
+        this.container.className = "container-fluid"
+        
         this.container.innerHTML = this._getHTML()        
         for (let i=0;i<this.tag_selectors.length;i++){
             let container = this.container.querySelector('#tag_selector_incl_' + i)
@@ -415,10 +417,10 @@ export class Tag_selector{
         } 
     }
 
-    show(){
-
+    show(){        
         this.container.innerHTML = this._getHTML()     
-        this.container.style.marginBottom = '5px';   
+        this.container.style.marginBottom = '5px';  
+       
         this._show_selected_tags()
        
         $(this.container).on('click', '.form-check-input', function (e) {              
@@ -466,7 +468,7 @@ export class Tag_selector{
 
     _getHTML() {
 
-        let result = "<div class='col col-sm-10' id ='selected_tags'></div>"        
+        let result = "<div class='col' id ='selected_tags'></div>"        
         
         let common_tags_html = ''
         for (let i = 0; i < this.tags.length; i++) {
@@ -486,7 +488,7 @@ export class Tag_selector{
         }
            result = `<div><h4>${this.caption}</h4></div>
             <div class = 'row bg-light border flex-grow-1'>${result}
-            <div class="dropdown col col-sm-2 col-sm-2">
+            <div class="dropdown  flex-grow-0">
             <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown">...
                 <span class="caret"></span></button>
             <div class="dropdown-menu keep_open">
@@ -500,6 +502,9 @@ export class Tag_selector{
                 </div>             
             </div>
         </div></div>`
+
+     //   result = `<div class="container-fluid">${result}</div>`
+
 
 
         return result

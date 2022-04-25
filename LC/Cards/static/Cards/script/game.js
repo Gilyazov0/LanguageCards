@@ -57,21 +57,14 @@ class Game {
         let ts_container =  this.container.querySelector('#tag_selectors_container');
         let captions = {'include':'Add cards with tags:','exclude':'except cards with tags:'}
         this.tag_selectors_set = new Tag_selector_set (this.user_tags, this.tags, captions,ts_container);
-        this.tag_selectors_set.onChange = function(){ game.update_start_game_page() };
+        this.tag_selectors_set.onChange = function(){ game.update_new_game_page() };
         
-        /*let observer = new MutationObserver(function(mutationsList, observer) {
-            console.log(mutationsList);
-            alert('[[f[fdfdfd');
-        });
-        observer.observe(ts_container, {characterData: false, childList: true, attributes: true, subtree: true});*/
-          
-        this.container.querySelector('#start-game-btn').onclick = function () { game.start() };
+        this.container.querySelector('#start-game-btn').onclick = function () { game.start_game() };
        
-        this.update_start_game_page()
+        this.update_new_game_page()
     }
  
-
-    update_start_game_page(){
+    update_new_game_page(){
 
         //this.tag_selectors_set.show();
         this.selected_tags = this.get_selected_tags();        
@@ -98,15 +91,13 @@ class Game {
                             }
                         }
                     })
-    }
-
+    }    
 
     get_selected_tags() {
         return this.tag_selectors_set.get_selected_tags();        
     }
 
-
-    start() {
+    start_game() {
         this.selected_tags = this.get_selected_tags();
 
         const front_attribute = [this.container.querySelector('#FA_selector').value];
@@ -144,23 +135,11 @@ class Game {
             .then(response => response.json())
             .then(result => {                
                 this.card_set = new Card_set(result.cards, result.tags, front_attribute, back_attributes);
-                this.update_game()
+                this.update_game_page()
             })
     }
 
-    show_new_card(direction) {       
-        
-        let onAnimationend = function () {
-            let increment = direction == 'right' ? +1:-1;
-            game.card_set.change_card(increment);
-            game.update_game();            
-            game.active_card_obj.move('in', direction);
-        };
-
-        this.active_card_obj.move('out', direction, onAnimationend);
-    }
-
-    update_game() {
+    update_game_page() {
         const card_set = this.card_set;
         if (card_set.cards_count() == 0) {
             this.container.innerHTML = `<div class="alert alert-danger" role="alert">
@@ -180,6 +159,18 @@ class Game {
       
             this.new_active_card_obj().show();                     
         }
+    }
+
+    show_new_card(direction) {       
+        
+        let onAnimationend = function () {
+            let increment = direction == 'right' ? +1:-1;
+            game.card_set.change_card(increment);
+            game.update_game_page();            
+            game.active_card_obj.move('in', direction);
+        };
+
+        this.active_card_obj.move('out', direction, onAnimationend);
     }
 
     new_active_card_obj(){

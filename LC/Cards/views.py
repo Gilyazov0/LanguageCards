@@ -4,7 +4,6 @@ from django.shortcuts import get_object_or_404, render
 from django.http import HttpResponseRedirect, JsonResponse, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from matplotlib.style import context
-from zmq import Message
 
 from .models import Card, Tag, FA_value, Face_attribute
 from random import shuffle

@@ -1,0 +1,60 @@
+{% extends 'Cards/layout.html' %}
+{% load static %}
+{% block script %}     
+{% if cards_count %}
+<script type="module" src="{% static 'Cards/script/card_set.js' %}"></script>
+
+<script type="module">    
+    import {Card, Card_set} from "{% static 'Cards/script/card_set.js' %}";
+  
+    document.addEventListener('DOMContentLoaded', function () {
+        const element = document.querySelector('#data');         
+
+        let obj = JSON.parse(element.getAttribute('card_set_data'))
+        let FAs = JSON.parse(element.getAttribute('FA_data'))
+        let defaultFA = '{{defaultFA}}'
+        if (defaultFA == '') defaultFA = FAs[0]
+        const index = FAs.indexOf(defaultFA);
+        if (index>-1) FAs.splice(index, 1)
+       
+        let card_set= new Card_set(obj.cards, obj.tags, [defaultFA], FAs);
+
+        for (let i=0; i < card_set.cards_count();i++){
+            const container = document.querySelector(`#card_container${i}`);
+            const card =  card_set.get_card(i, container)
+            card.show()
+        } 
+     })
+</script>
+{% endif %}
+{% endblock %}
+
+{% block title %} Search {% endblock %}
+{% block content %}
+{% csrf_token %}
+<form class="form-row align-items-center" method="post">
+    <div class="col-auto">
+        <input id="search" placeholder="Enter search query" class="form-control mb-2" type="text" name="search" required
+            autofocus value="{{search}}" onfocus="const temp_value=this.value; this.value=''; this.value=temp_value">
+    </div>
+    <div class="col-auto">
+        <input id="FA" class="form-control mb-2" name='FA' list="FAs-list" type='text'
+       value="{{defaultFA}}" placeholder="front side"  onfocus="this.value=''">
+        <datalist id="FAs-list">
+            {% for FA in FAs_options %}
+            <option value='{{FA}}'> {{FA}}</option>
+            {% endfor %}
+        </datalist>
+        </input>
+    </div>
+    <div class="col-auto">
+        <button class="form-control mb-2 btn btn-primary" type="submit">search</button>
+    </div>
+</form>
+
+<div id = 'data' FA_data = '{{FA_data}}' card_set_data = '{{card_set_data}}'cards_count = '{{cards_count}}' ></div>
+{% for i in cards_count %}
+<div class="card"><div id = 'card_container{{i}}'class="card-body"></div></div>
+
+{% endfor %} 
+{% endblock %}

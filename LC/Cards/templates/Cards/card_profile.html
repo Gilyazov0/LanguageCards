@@ -1,8 +1,10 @@
 {% extends 'Cards/layout.html' %}
 {% load static %}
 {% block script %}     
-<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
-<script>
+<script type="module" src="{% static 'Cards/script/card_set.js' %}"></script>
+<script type="module">
+    var CSRF_TOKEN = '{{ csrf_token }}';
+    import {Card} from "{% static 'Cards/script/card_set.js' %}";
     function get_confirmation() {
     if (confirm("Are you sure?")) {
         return true;
@@ -10,12 +12,24 @@
         return false;
     }
     }
+    document.addEventListener('DOMContentLoaded', function () {
+        const element = document.querySelector('#data');
+        const container = document.querySelector('#card_container');
+        let card = Card.create_from_JSON_strings(element.getAttribute('card_data'), element.getAttribute('tags_data'), container)
+        card.card_set.CSRF_TOKEN = CSRF_TOKEN;
+        card.show()
+     })
 </script>
 {% endblock %}
 
 {% block title %} Card profile {% endblock %}
 {% block content %}
 {% load crispy_forms_tags %}  
+{% if message %}
+    <div class="alert alert-primary disappear" id="lable-cards-count" > <h1> {{ message }}</h1></div>
+{% endif %}   
+<div id = 'data' tags_data = '{{tags_data}}' card_data ='{{card_data}}'></div>
+<div id = 'card_container'></div>
 <form action="{% url 'Cards:card_profile' card_id %}" method="post">
     {% csrf_token %}
     

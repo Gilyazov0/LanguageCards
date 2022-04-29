@@ -1,0 +1,36 @@
+{% extends 'Cards/layout.html' %}
+{% load static %}
+{% block script %}  
+    <script type="module" src="{% static 'Cards/script/card_set.js' %}"></script>
+    <script type="module">
+        
+        import {Timer,State} from "{% static 'Cards/script/card_set.js' %}";
+        
+        document.addEventListener('DOMContentLoaded', function () {
+            let container = document.querySelector('#timer0');
+            var timer0 = new Timer(document,8,container);
+            timer0.onChange = function(timer,event){
+                if (timer.state == State.stopped){
+                timer1.reset(); timer1.start()
+                }
+            }            
+            container = document.querySelector('#timer1');
+            var timer1 = new Timer(document,7,container);
+            timer1.onChange = function(timer,event){
+                if (timer.state == State.stopped){
+                timer0.reset(); timer0.start()
+                }
+            }      
+           timer0.start()
+        })
+    </script>
+{% endblock %}
+{% block title %} Game {% endblock %}
+{% block content %}
+<div id = 'meta_game_container'></div>
+
+<div id = 'timer0'> </div>
+<div id = 'timer1'> </div>
+{% endblock %}
+
+ 

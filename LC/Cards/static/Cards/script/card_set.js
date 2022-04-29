@@ -1,4 +1,3 @@
-
 $(document).ready(function() { //jQuery библиотека скриптов на JS
     $(document).on('click', '.dropdown-menu', function (e) {
         if (e.target.classList.contains('keep_open')){
@@ -8,7 +7,7 @@ $(document).ready(function() { //jQuery библиотека скриптов н
     }); 
 });
 
-function find_nearest_obj(dom_element){
+export function find_nearest_obj(dom_element){
     let element = dom_element
     while (element != document) {
         if (element.obj != undefined) {
@@ -25,17 +24,19 @@ function OpenUrlInNewWindow(event){
     window.open(url, '_blank').focus();
    }
 
+
 //Игровая карта. Хранит данные карты в виде сырых данных JSON
 export class Card {
     constructor(card_data, front, back, card_set, show_tags = true, container = null) {
         this.card_data = card_data;
-        this.front = front; //[fron face attr]
+        this.front = front; //[front face attr]
         this.back = back; //[back face attr]
         this.show_tags = show_tags;
         this.card_set = card_set;
         this.container = container;
         this.is_front_side = true;
         this.container.card=this;
+        this.CSRF_TOKEN = undefined;
     }
     static create_without_card_set(card_data, front, back, user_tags, show_tags = true, container = null)
     {
@@ -44,6 +45,16 @@ export class Card {
         result.card_set = card_set
         return result; 
         
+    }
+
+    //creates card from string json data provided by API
+    static create_from_JSON_strings(card_data_JSON, tags_data_JSON, container){
+        const card_data_ = JSON.parse(card_data_JSON);
+        const tags_data_ = JSON.parse(tags_data_JSON);
+        const FAs_ = Object.keys(card_data_['FAs'])
+        const front_ = [FAs_.shift()];
+        const back_ = FAs_;
+        return Card.create_without_card_set(card_data_, front_, back_, tags_data_, true, container);
     }
 
     get_id() {
@@ -122,14 +133,16 @@ export class Card {
             card_menu[i].onclick = OpenUrlInNewWindow;
         }
     }
+
      
     _tag_onclick(event) {
         const card = event.target.card;
         const tag_id = event.target.getAttribute("tag_id");
    
-        fetch('../delete_card_tag', {
+        fetch('/Cards/delete_card_tag', {
             method: 'POST',
-            body: JSON.stringify({ 'tag_id':tag_id, 'card_id': card.get_id()})
+            body: JSON.stringify({ 'tag_id':tag_id, 'card_id': card.get_id()}),
+            headers: { "X-CSRFToken": card.CSRF_TOKEN }
         })
             .then(
                 response => response.json()
@@ -145,9 +158,10 @@ export class Card {
         const card = event.target.card;
         const tag_id =event.target.value;
    
-        fetch('../set_card_tag', {
+        fetch('/Cards/set_card_tag', {
             method: 'POST',
-            body: JSON.stringify({ 'tag_id':tag_id, 'card_id': card.get_id()})
+            body: JSON.stringify({ 'tag_id':tag_id, 'card_id': card.get_id()}),
+            headers: { "X-CSRFToken": card.CSRF_TOKEN }
         })
             .then(
                 response => response.json()
@@ -337,6 +351,7 @@ export class Tag_selector_set{
         
         this.tag_selectors.push(ts_pair);
         this.show()
+        return ts_pair
     }
 
     _getHTML(){
@@ -351,7 +366,6 @@ export class Tag_selector_set{
                   <div button class="btn btn-primary" id = 'add-tag-selectors-btn' <h1> add filter </h1></button> </div>`        
         return result
     }
-
 
     show(){
         if(this.container == undefined) return
@@ -374,7 +388,7 @@ export class Tag_selector_set{
         };
 
     }
-// return [{'include':[tag_id, ..], 'exclude':[tag_id, ...]} ...]
+    // return [{'include':[tag_id, ..], 'exclude':[tag_id, ...]} ...]
     get_selected_tags(){
         let result =[]
         for(let i=0; i< this.tag_selectors.length;i++){
@@ -384,6 +398,25 @@ export class Tag_selector_set{
             result.push(element);
         }
         return result;
+    }
+
+    //return settings(internal state) in serializable structure
+    get_settings(){
+        return {'selected_tags':this.get_selected_tags()}
+    }
+
+    //inverse of get_settings()
+    set_settings(settings){
+        this.tag_selectors = []
+        const selected_tags = settings['selected_tags'];
+        if (selected_tags == undefined) this.add_tag_selectors_pair()
+        else{
+            for (let i=0; i<selected_tags.length; i++){
+                let ts_pair = this.add_tag_selectors_pair();
+                ts_pair['include'].selected_tags = selected_tags[i]['include'];
+                ts_pair['exclude'].selected_tags = selected_tags[i]['exclude'];
+            }
+        }      
     }
 }
 
@@ -511,3 +544,299 @@ export class Tag_selector{
         return result
     }
 }
+export class Settings{
+    constructor(){        
+        this.settings = {}
+    }
+
+    get(name){
+        return this.settings[name]
+    }
+
+    set(name, value){
+        this.settings[name] = value
+    }
+
+    reset(){
+        this.settings = {}
+    }
+}
+
+
+
+/** used to specify internal state of objects 
+ * @class
+ */
+
+export class State {
+
+    static default = new State('default')
+    /**
+     * 
+     * @param {string} name name of the state. Will be used ONLY to save State to  JSON    ToDo
+     * @param {State} specified_state perent state wich is specify by this State. 
+     *     For example State "Move" could be specified by "Run" or "Walk"
+     */
+    constructor(name, specified_state = undefined){
+        this.specified_state = specified_state
+        this.name = name
+    }
+
+    /**
+     * 
+     * @param {string} name 
+     * @param {State} specified perent state wich is specify by this State. 
+     *     For example State "Move" could be specified by "Run" or "Walk"
+     * @returns 
+     */
+
+    static get_or_create_state(name, specified = State.default){
+        if (Object.keys(State).find((value)=>{return value == name} ) )return State[name]
+        State[name] = new State(name,specified)
+    }
+
+    /**
+     * 
+     * @param {State} state 
+     * @returns {Boolean} True if this = state or specify state
+     */
+    is_in_state(state){
+        return this == state || this.specify_state?.is_in_state(state)
+    }
+}
+ 
+/** just able to save internal state into JSON and load it back
+ * @class
+ */
+ export class Saveable{
+
+    constructor(){
+    }
+    
+    /**
+     * loads this object form JSON
+     * @param {JSON} objectJSON 
+     */
+    load_from_JSON(objectJSON)
+    {
+        for( let key in objectJSON){
+            _load_attribute_to_JSON(key,objectJSON)
+        }
+    }
+
+    /**
+     * saves this object to JSON 
+     * @returns {JSON}
+     */
+    save_to_JSON(){
+        let result = {}   
+        for (let key in this){
+            if (this[key] instanceof Saveable){
+                _save_attribute_to_JSON(key,result)
+            }
+        } 
+        return result
+    }
+
+    /** loads one attribute 'attribute_name' from JSON
+     * @protected
+     * @param {string} attribute_name 
+     * @param {JSON} objectJSON 
+     */
+    _load_attribute_to_JSON(attribute_name,objectJSON) {
+        let attribute = this[attribute_name]
+        if (attribute instanceof Saveable) {
+            attribute.load_from_JSON(objectJSON[attribute_name])
+        } 
+        else {
+            this[attribute_name] = objectJSON[attribute_name]   
+        }    
+    }    
+  
+    /** saves atribute 'attribute_name' to 
+     * @protected
+     * @param {string} attribute_name 
+     * @param {JSON} objectJSON 
+     */
+    _save_attribute_to_JSON(attribute_name,objectJSON) {
+        if (this[attribute_name] instanceof Saveable){
+            let value = this[attribute_name].save_to_JSON()
+            if (!isEmpty(value)) objectJSON[attribute_name] = value;
+        } 
+        else {
+            objectJSON[attribute_name] = this[attribute_name]
+        }
+    }
+
+}
+
+/**  represents abstract Widget that 
+*   - can show itself in container DOM element
+*   - remeber its 'owner' - any object which owns the Wiget
+*   - can generate event onChange when internal state changes
+*   @class
+*   @extends {Saveable}
+*/  
+export class Widget extends Saveable{
+
+    static default = State.default
+
+    /**
+    * @constructor
+    * @param {Object} owner
+    * @param {HTMLElement} container  
+    */
+    constructor(owner,container = undefined){
+        super()
+        this.owner = owner
+        this.set_container(container)
+        this.onChange = undefined
+        this._state = State.default;
+    }
+
+    /**
+     * @return {State}
+     */
+    get state(){
+        return this._state
+    }
+
+    /** @param {HTMLElement} container */
+    set_container(container) {
+        this.container = container;
+        if (container != undefined) {
+            this.container.obj = this;
+        } 
+    }
+    /**
+     * shows Widget inside container
+     * @returns {boolean} ture - succesfully showed, false not
+     */
+    show(){
+        if (this.container) {
+            this.container.innerHTML = this._getHTML()
+            return true
+        } else return false
+    }
+    /**
+     * 
+     * @param {State} new_state 
+     * @param {Boolean} throw_onChange 
+     */
+    _set_state(new_state, throw_onChange = false){
+        const old_state = this.state;
+        this._state = new_state;
+        if (throw_onChange)
+            this._change({'event_name':'state_change', 'old_state': old_state, 'new_state': new_state })
+    }
+
+    /**@protected*/
+    _change(event){
+        if (this.onChange) this.onChange(this,event)
+    }
+
+    /** 
+    * @protected
+    * @returns {string} html to display
+    */
+    _getHTML() {
+        return ''
+    }
+}
+
+/**  represents Timer  
+*   - shows it current value 
+*   - when started can change value from initial_time to zero with time
+*   - generates event onChange when value becomes 0
+*   @class
+*   @extends {Widget}
+*/  
+export class Timer extends Widget{
+ 
+    /**
+    * @constructor
+    * @param {Object} owner 
+    * @param {HTMLElement} container 
+    * @param {Number} initial_time initial number of secons 
+    */
+    constructor(owner,initial_time,container = undefined){
+        super(owner,container)
+        this.initial_time = initial_time;
+        this.value = initial_time;
+        this._set_state(State.stopped);
+        this._start_time = undefined;
+        this.interval = undefined;
+    }
+
+   
+   /**
+    * starts Timer
+    */
+    start(){
+        this._set_state(State.running, true)
+        this._start_time = new Date().getTime();
+        this.interval = setInterval(this._tic.bind(this),1000)
+    }
+
+    /**
+     * reset Timer doesn't change state 
+     * @param {Number} initial_time 
+     */
+
+    reset(initial_time = undefined){
+        if (initial_time) this.initial_time = initial_time;
+        this.value = this.initial_time;
+        this.show()
+    }
+
+    /**
+     * stops Timer
+     */
+    stop(){
+        clearInterval(this.interval)
+        this._set_state(State.stopped,true);
+        this.show();
+    }
+
+     /** @override */
+    save_to_JSON(){
+        let result = super.save_to_JSON(objectJSON) 
+
+        this._save_attribute_to_JSON('initial_time',result)
+
+        return result
+    }
+
+    /**
+     * if ruuning updates Timers value
+     */
+    _tic(){
+        if (this.state.is_in_state(State.running)){
+            this.value = this.initial_time + Math.round((this._start_time - new Date().getTime())/1000);
+            if(this.value <=0){
+                this.value = 0;
+                this.stop();
+            }
+            this.show();
+        }
+    }
+
+     /**
+     *  @override 
+     */
+    show(){              
+        if (!super.show()) return false
+        return true    
+    }
+
+     /** @override */
+    _getHTML() {
+        return `<div> ${this.value}    ${this.state.name}  </div>`
+    }     
+}
+
+/**
+ * all possible states of Timer 
+ */
+State.get_or_create_state('stopped')
+State.get_or_create_state('running')

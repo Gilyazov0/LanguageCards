@@ -1,40 +1,47 @@
-import {Card_set,Card, Tag_selector,Tag_selector_set } from './card_set.js'
+import {Card_set,Card, Tag_selector,Tag_selector_set,Settings,find_nearest_obj} from './card_set.js'
 
+//var game
+var meta_game
 var game
 
 //assumming that "game" is global variable, need to find a way to avoid this (see start()).
 class Game {
     // методы класса
-    constructor(container ) {
+    constructor(tags,user_tags,FAs,container=undefined) {
 
-        this.container = container; // DOM элемент содержащий игру
+        this.set_container(container); // DOM элемент содержащий игру
         this.card_set = undefined;
-        this.tags = undefined; //[{'name':name,'id': id},{}...]
-        this.user_tags = undefined;//[{'name':name,'id': id},{}...]
-        this.FAs = undefined;//[FA1_name,FA2_name...]
+        this.tags = tags; //[{'name':name,'id': id},{}...]
+        this.user_tags = user_tags;//[{'name':name,'id': id},{}...]
+        this.FAs = FAs;//[FA1_name,FA2_name...]
         this.selected_tags = undefined;
         this.active_card_obj = undefined;
         this.touchStart = null; //Точка начала касания
         this.touchStart = null; //Текущая позиция
         this.active_card_container = undefined; //DOM элемент содержащий текущую карту
         this.tag_selectors_set = undefined;
+        this.settings = undefined; // Settings instance
+        this.name = 'Simple game'
+        let captions = {'include':'Add cards with tags:','exclude':'except cards with tags:'}
+        this.tag_selectors_set =  new Tag_selector_set (this.user_tags, this.tags, captions,);   
+    }
 
-        fetch('../get_metadata', {
-            method: 'POST',
-            body: JSON.stringify({})
-        })
-            .then(response => response.json())
-            .then(result => {
-                console.log(result)
-                this.tags = result.tags;
-                this.user_tags = result.user_tags;
-                this.FAs = result.FAs;
-                let captions = {'include':'Add cards with tags:','exclude':'except cards with tags:'}
-                this.tag_selectors_set =  new Tag_selector_set (this.user_tags, this.tags, captions,);;   
-                this.new_game()
-            })
+    set_container(container){
+        this.container = container;
+        if (container != undefined) {
+            this.container.obj = this;
+        } 
+    }
 
-        
+    load_settings(settings){
+        this.settings = settings
+        this.tag_selectors_set.set_settings(settings.get('tag_selectors_set_stgs'))        
+    }
+
+    save_settings(){
+        if (this.settings == undefined) this.settings = new Settings()
+        this.settings.set('tag_selectors_set_stgs', this.tag_selectors_set.get_settings())
+        return this.settings
     }
      
     new_game() {
@@ -62,9 +69,9 @@ class Game {
         this.tag_selectors_set.set_container(ts_container)
         this.tag_selectors_set.show()
         
-        this.tag_selectors_set.onChange = function(){ game.update_new_game_page() };
+        this.tag_selectors_set.onChange = function(){ meta_game.active_game.update_new_game_page() };
         
-        this.container.querySelector('#start-game-btn').onclick = function () { game.start_game() };
+        this.container.querySelector('#start-game-btn').onclick = function (e) { find_nearest_obj(e.target).start_game()};
        
         this.update_new_game_page()
     }
@@ -77,7 +84,7 @@ class Game {
                 fetch('../get_cards', {
                     method: 'POST',
                     body: JSON.stringify({
-                        filter: this.selected_tags
+                        tag_filter: this.selected_tags
                     })
                 }
                 )
@@ -119,21 +126,21 @@ class Game {
         this.active_card_container = this.container.querySelector('#current_card');
 
         //assumming that "game" is global variable, need to find a way to avoid this.
-        this.container.querySelector('#show-prev-card-btn').onclick = function () { game.show_new_card('left') };
-        this.container.querySelector('#show-next-card-btn').onclick = function () { game.show_new_card('right') };
-        this.container.querySelector('#reverse-card-btn').onclick = function () { game.active_card_obj.reverse();};
+        this.container.querySelector('#show-prev-card-btn').onclick = function (e) {find_nearest_obj(e.target).show_new_card('left') };
+        this.container.querySelector('#show-next-card-btn').onclick = function (e) { find_nearest_obj(e.target).show_new_card('right') };
+        this.container.querySelector('#reverse-card-btn').onclick = function (e) { find_nearest_obj(e.target).active_card_obj.reverse();};
         //Перехватываем события
-        this.container.addEventListener("touchstart", function (e) { game.TouchStart(e); }); //Начало касания
-        this.container.addEventListener("touchmove", function (e) { game.TouchMove(e); }); //Движение пальцем по экрану
+        this.container.addEventListener("touchstart", function (e) { find_nearest_obj(e.target).TouchStart(e); }); //Начало касания
+        this.container.addEventListener("touchmove", function (e) { find_nearest_obj(e.target).TouchMove(e); }); //Движение пальцем по экрану
         //Пользователь отпустил экран
-        this.container.addEventListener("touchend", function (e) { game.TouchEnd(e); });
+        this.container.addEventListener("touchend", function (e) { find_nearest_obj(e.target).TouchEnd(e); });
         //Отмена касания
-        this.container.addEventListener("touchcancel", function (e) { game.TouchEnd(e); });
+        this.container.addEventListener("touchcancel", function (e) { find_nearest_obj(e.target).TouchEnd(e); });
 
         fetch('../get_cards', {
             method: 'POST',
             body: JSON.stringify({
-                filter: this.selected_tags
+                tag_filter: this.selected_tags
             })
         }
         )
@@ -170,9 +177,10 @@ class Game {
         
         let onAnimationend = function () {
             let increment = direction == 'right' ? +1:-1;
-            game.card_set.change_card(increment);
-            game.update_game_page();            
-            game.active_card_obj.move('in', direction);
+            let agame = meta_game.active_game;
+            agame.card_set.change_card(increment);
+            agame.update_game_page();            
+            agame.active_card_obj.move('in', direction);
         };
 
         this.active_card_obj.move('out', direction, onAnimationend);
@@ -243,13 +251,88 @@ class Game {
     }
 }
 
+class MetaGame {
+    constructor(container) {
+        this.set_container(container)
+        //for now 2 posible variants: 'new' and 'runing'
+        this.game_state = 'new'
+        fetch('../get_metadata', {
+            method: 'POST',
+            body: JSON.stringify({})
+        })
+            .then(response => response.json())
+            .then(result => {
+                const tags = result.tags;
+                const user_tags = result.user_tags;
+                const FAs = result.FAs;
+                this.games = [new Game(tags,user_tags,FAs), new Game(tags,user_tags,FAs)]
+                this.active_game = this.games[0];
+                game = this.active_game;
+                this.new_game()
+            })   
+    }
+
+    set_container(container){
+        this.container = container;
+        if (container != undefined) {
+            this.container.obj = this;
+        } 
+    }
+
+    new_game() {
+        this.game_state = 'new'
+        this.show()
+    }    
+
+    show() {
+        this.container.innerHTML = this._getHTML();
+
+        if (this.game_state == 'new') {
+            let game_selector = this.container.querySelector('#game_selector');
+            game_selector.onchange = (e)=>{
+                const index = Number(e.target.value);
+                find_nearest_obj(e.target)._select_game(index)
+                } 
+         }
+        this.active_game.set_container(this.container.querySelector('#game_container'));
+        if (this.game_state == 'new') {this.active_game.new_game()}
+        else if (this.game_state == 'running')  this.active_game.start_game()
+    }
+
+    _getHTML() {
+        let result = '<div id="game_container"></div>'
+        if (this.game_state == 'running') return result
+        let game_selector = `
+        <div> <label><h4>Select game:</h4> </label>
+            <select id ="game_selector" class="form-select form-select-sm">
+               `
+        for (let i = 0; i < this.games.length; i++) {
+            game_selector += `<option value='${i}'>${this.games[i].name}</option>`
+        }
+        game_selector += '</select></div>'
+        
+        result = game_selector + result;
+        return result
+     }
+
+     _select_game(index) {
+        let settings = this.active_game.save_settings()
+        this.active_game = this.games[index]
+        game = this.active_game;
+        this.active_game.set_container(this.container.querySelector('#game_container'));
+        this.active_game.load_settings(settings);    
+        this.active_game.new_game();
+     }
+}
+
 document.addEventListener('DOMContentLoaded', function () {
-    game = new Game(document.querySelector('#game_container'));
+    meta_game = new MetaGame(document.querySelector('#meta_game_container'))
+   // meta_game.new_game()
 
     document.querySelector('#new_game_btn').onclick = (e)=> {
         e.stopPropagation();
         e.preventDefault();
-        game.new_game()}
+        meta_game.new_game()}
 })
 
 

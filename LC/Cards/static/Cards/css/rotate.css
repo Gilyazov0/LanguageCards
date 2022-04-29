@@ -95,3 +95,34 @@
         transform: translateX(0%);
        }
   }
+
+  @keyframes disappear{
+    0%{
+      opacity: 1;
+      transform: rotateX(90deg);
+      max-height: 0px;
+    }
+
+    30%{
+      opacity: 1;
+      transform: rotateX(0deg);
+      max-height: 100px;
+    }
+    70%{
+      opacity: 1;
+      transform: rotateX(0deg);
+      max-height: 100px;
+    }
+    100%{
+      display: none;
+      opacity: 0;
+      transform: rotateX(90deg);
+      max-height: 0px;
+    }
+  }
+  
+  .disappear{
+      animation-name: disappear;
+      animation-duration: 3000ms;
+      animation-fill-mode: forwards;
+  }

@@ -18,3 +18,8 @@
 11. Создание и редактирование общих тегов в юзер интерфейсе
 
 12 убрать   this.container.style.marginBottom = '5px'; из метода show в Tag_selector классе и проверить аналогичные проблемы 
+
+13 Разобраться с   card.CSRF_TOKEN  см. Card_Set   fetch('/Cards/delete_card_tag', {
+            method: 'POST',
+            body: JSON.stringify({ 'tag_id':tag_id, 'card_id': card.get_id()}),
+            headers: { "X-CSRFToken": card.CSRF_TOKEN }

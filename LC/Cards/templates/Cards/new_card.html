@@ -7,12 +7,8 @@
     import {Card} from "{% static 'Cards/script/card_set.js' %}";
     document.addEventListener('DOMContentLoaded', function () {
         const element = document.querySelector('#data');
-        let card_data = JSON.parse(element.getAttribute('card_data'));
-        let tags_data = JSON.parse(element.getAttribute('tags_data'));
-        let FAs = Object.keys(card_data['FAs'])
-        let front = [FAs.shift()];
-        let back = FAs;
-        let card= Card.create_without_card_set(card_data, front, back, tags_data, true, document.querySelector('#card_container'));
+        const container = document.querySelector('#card_container');
+        let card = Card.create_from_JSON_strings(element.getAttribute('card_data'), element.getAttribute('tags_data'), container)
         card.show()
      })
 </script>

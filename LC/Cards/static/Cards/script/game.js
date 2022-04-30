@@ -1,10 +1,5 @@
-import {Card_set,Card, Tag_selector,Tag_selector_set,Settings,find_nearest_obj, Widget, State} from './card_set.js'
+import {Card_set,Card, Tag_selector,Tag_selector_set,Settings, Widget, State} from './card_set.js'
 
-//var game
-var meta_game
-var game
-
-//assumming that "game" is global variable, need to find a way to avoid this (see start()).
 class Game extends Widget {
     // методы класса
     constructor(owner,tags,user_tags,FAs,container=undefined) {
@@ -15,9 +10,7 @@ class Game extends Widget {
         this.user_tags = user_tags;//[{'name':name,'id': id},{}...]
         this.FAs = FAs;//[FA1_name,FA2_name...]
         this.selected_tags = undefined;
-        this.active_card_obj = undefined;
-        this.touchStart = null; //Точка начала касания
-        this.touchStart = null; //Текущая позиция
+        this.active_card_obj = undefined;       
         this.active_card_container = undefined; //DOM элемент содержащий текущую карту
         this.tag_selectors_set = undefined;
         this.settings = undefined; // Settings instance
@@ -42,16 +35,24 @@ class Game extends Widget {
     */
     get state(){
         return super.state
+    }   
+     
+    show(){
+        if (!super.show()) return false;
+        switch(this._state){
+            case State.settings: return this._show_settings()
+            case State.game: return this._show_game()
+            default: throw new Error('Unknown state');                
+        }        
     }
 
-     /**
-     * 
-     * @param {State} new_state 
-     * @param {Boolean} throw_onChange 
-     */
-      _set_state(new_state, throw_onChange = false){
-        if (this._state = State.settings) this._update_selected_settings()
-        super._set_state(new_state, throw_onChange)
+    start(){
+        this._set_state(State.game, true)
+        this.show()        
+    }
+
+    get_selected_tags() {
+        return this.tag_selectors_set.get_selected_tags();        
     }
 
     load_settings(settings){
@@ -64,32 +65,51 @@ class Game extends Widget {
         this.settings.set('tag_selectors_set_stgs', this.tag_selectors_set.get_settings())
         return this.settings
     }
-     
-    show(){
-        if (!super.show()) return false;
-        switch(this._state){
-            case State.settings: return this.show_settings()
-            case State.game: return this.show_game()
-            default: throw new Error('Unknown state');                
-        }        
+
+    /**
+    * 
+    * @param {State} new_state 
+    * @param {Boolean} throw_onChange 
+    */
+    _set_state(new_state, throw_onChange = false) {
+        if (this._state = State.settings) this._update_selected_settings()
+        super._set_state(new_state, throw_onChange)
     }
 
-    show_settings(){
+    _show_settings(){
         let ts_container =  this.container.querySelector('#tag_selectors_container');
         this.tag_selectors_set.set_container(ts_container)
         this.tag_selectors_set.show()
         
-        this.tag_selectors_set.onChange = function(){ meta_game.active_game.update_settings_page() };
+        this.tag_selectors_set.onChange = function(){ this._update_settings_page() }.bind(this);
         
-        this.container.querySelector('#start-game-btn').onclick = function (e) { find_nearest_obj(e.target).start()};
+        this.container.querySelector('#start-game-btn').onclick = function (e) { this.start()}.bind(this);
        
-        this.update_settings_page()
-    }
-    start(){
-        this._set_state(State.game, true)
-        this.show()        
+        this._update_settings_page()
     }
 
+    _show_game(){      
+
+        this.active_card_container = this.container.querySelector('#current_card');
+     
+        this.container.querySelector('#show-prev-card-btn').onclick = this._show_new_card.bind(this,'left') ;
+        this.container.querySelector('#show-next-card-btn').onclick = this._show_new_card.bind(this,'right');
+        this.container.querySelector('#reverse-card-btn').onclick = function () {this.active_card_obj.reverse();}.bind(this);
+        this._activate_swipes()
+
+        fetch('../get_cards', {
+            method: 'POST',
+            body: JSON.stringify({
+                tag_filter: this.selected_tags
+            })        }
+        )
+            .then(response => response.json())
+            .then(result => {                
+                this.card_set = new Card_set(this, result.cards, result.tags, this.front_attribute, this.back_attributes);
+                this._update_game_page()
+            })
+    }
+        
     _update_selected_settings(){
         
         const FA_selector = this.container?.querySelector('#FA_selector')
@@ -101,36 +121,6 @@ class Game extends Widget {
         let back_attributes = [...this.FAs];
         this.back_attributes = back_attributes.filter((value)=>{return value !=this.front_attribute[0]});
     }
-
-    show_game(){      
-
-        this.active_card_container = this.container.querySelector('#current_card');
-     
-        this.container.querySelector('#show-prev-card-btn').onclick = function (e) {find_nearest_obj(e.target).show_new_card('left') };
-        this.container.querySelector('#show-next-card-btn').onclick = function (e) { find_nearest_obj(e.target).show_new_card('right') };
-        this.container.querySelector('#reverse-card-btn').onclick = function (e) { find_nearest_obj(e.target).active_card_obj.reverse();};
-        //Перехватываем события
-        this.container.addEventListener("touchstart", function (e) { find_nearest_obj(e.target).TouchStart(e); }); //Начало касания
-        this.container.addEventListener("touchmove", function (e) { find_nearest_obj(e.target).TouchMove(e); }); //Движение пальцем по экрану
-        //Пользователь отпустил экран
-        this.container.addEventListener("touchend", function (e) { find_nearest_obj(e.target).TouchEnd(e); });
-        //Отмена касания
-        this.container.addEventListener("touchcancel", function (e) { find_nearest_obj(e.target).TouchEnd(e); });
-
-        fetch('../get_cards', {
-            method: 'POST',
-            body: JSON.stringify({
-                tag_filter: this.selected_tags
-            })
-        }
-        )
-            .then(response => response.json())
-            .then(result => {                
-                this.card_set = new Card_set(this, result.cards, result.tags, this.front_attribute, this.back_attributes);
-                this.update_game_page()
-            })
-    }
-
    
     _getHTML(){    
         switch(this._state){
@@ -197,13 +187,12 @@ class Game extends Widget {
         </div>
         </div>`;
 
-        const loading =  `<div id="loading"><div class="alert alert-primary" role="alert"> <h1>Loading...</h1> </div></div>`
+        const loading =  `<div id="loading"><div class="alert alert-primary" role="alert"> <h1>Loading... Продам гараж </h1> </div></div>`
 
         return loading + error_message + game
     }
- 
- 
-    update_settings_page(){
+  
+    _update_settings_page(){
         
         this.selected_tags = this.get_selected_tags();        
 
@@ -229,13 +218,9 @@ class Game extends Widget {
                             }
                         }
                     })
-    }    
-
-    get_selected_tags() {
-        return this.tag_selectors_set.get_selected_tags();        
-    }
+    }       
   
-    update_game_page() {
+    _update_game_page() {
         const card_set = this.card_set;
         const empty_card_set = this.container.querySelector('#empty_card_set')
         const full_card_set = this.container.querySelector('#full_card_set')
@@ -251,93 +236,42 @@ class Game extends Widget {
             this.container.querySelector('#show-prev-card-btn').disabled = (card_set.get_current_card_number() <= 0);
             this.container.querySelector('#show-next-card-btn').disabled = (card_set.get_current_card_number() >= card_set.cards_count() - 1);
       
-            this.new_active_card_obj().show();                     
+            this._new_active_card_obj().show();                     
         }
     }
 
-    show_new_card(direction) {       
+    _show_new_card(direction) {       
         
         let onAnimationend = function () {
             let increment = direction == 'right' ? +1:-1;
-            let agame = meta_game.active_game;
-            agame.card_set.change_card(increment);
-            agame.update_game_page();            
-            agame.active_card_obj.move('in', direction);
-        };
+           
+            this.card_set.change_card(increment);
+            this._update_game_page();            
+            this.active_card_obj.move('in', direction);
+        }.bind(this);
 
         this.active_card_obj.move('out', direction, onAnimationend);
     }
 
-    new_active_card_obj(){
+    _new_active_card_obj(){
         this.active_card_obj = this.card_set.get_card(this.card_set.get_current_card_number(), this.active_card_container)
         return this.active_card_obj;
     }
-
-    TouchStart(e) {
-        //Получаем текущую позицию касания
-        this.touchStart = { x: e.changedTouches[0].clientX, y: e.changedTouches[0].clientY };
-        this.touchPosition = { x: this.touchStart.x, y: this.touchStart.y };
+ 
+    _swipe_left(){
+        this._show_new_card('left');
     }
-
-    TouchMove(e) {
-        //Получаем новую позицию
-        this.touchPosition = { x: e.changedTouches[0].clientX, y: e.changedTouches[0].clientY };
-    }
-
-    TouchEnd(e) {
-
-        this.CheckAction(); //Определяем, какой жест совершил пользователь
-
-        //Очищаем позиции
-        this.touchStart = null;
-        this.touchPosition = null;
-    }
-
-    CheckAction() {
-        const sensitivity = 20;
-        var d = //Получаем расстояния от начальной до конечной точек по обеим осям
-        {
-            x: this.touchStart.x - this.touchPosition.x,
-            y: this.touchStart.y - this.touchPosition.y
-        };
-       
-        if (Math.abs(d.x) > Math.abs(d.y)) //Проверяем, движение по какой оси было длиннее
-        {
-            if (Math.abs(d.x) > sensitivity) //Проверяем, было ли движение достаточно длинным
-            {
-                if (d.x > 0) //Если значение больше нуля, значит пользователь двигал пальцем справа налево
-                {
-                    console.log("Swipe Left");
-                    this.show_new_card('left');
-                }
-                else //Иначе он двигал им слева направо
-                {
-                    console.log("Swipe Right");
-                    this.show_new_card('right');
-                }
-            }
-        }
-        else //Аналогичные проверки для вертикальной оси
-        {
-            if (Math.abs(d.y) > sensitivity) {
-                if (d.y > 0) //Свайп вверх
-                {
-                    console.log("Swipe up");
-                }
-                else //Свайп вниз
-                {
-                    console.log("Swipe down");
-                }
-            }
-        }
+    
+    _swipe_right(){
+        this._show_new_card('right');
     }
 }
 
-class MetaGame {
+class MetaGame extends Widget{
     constructor(container) {
-        this.set_container(container)
-        //for now 2 posible variants: 'new' and 'runing'
-        this.game_state = 'new'
+        super(undefined,container)            
+        this._state = State.settings;
+        
         fetch('../get_metadata', {
             method: 'POST',
             body: JSON.stringify({})
@@ -348,45 +282,51 @@ class MetaGame {
                 const user_tags = result.user_tags;
                 const FAs = result.FAs;
                 this.games = [new Game(this,tags,user_tags,FAs), new Game(this,tags,user_tags,FAs)]
-                this.active_game = this.games[0];
-                game = this.active_game;
+                this.active_game = this.games[0];               
                 this.new_game()
             })   
     }
 
-    set_container(container){
-        this.container = container;
-        if (container != undefined) {
-            this.container.obj = this;
-        } 
-    }
-
     new_game() {
-        this.game_state = 'new'
+        this._state = State.settings
         this.show()
     }    
 
     show() {
-        this.container.innerHTML = this._getHTML();
+        if (!super.show()) return false;
+        this.active_game.onChange = function() {
+            this._state = this.active_game.state
+            this.show()
+        }.bind(this)
 
-        if (this.game_state == 'new') {
-            let game_selector = this.container.querySelector('#game_selector');
-            game_selector.onchange = (e)=>{
-                const index = Number(e.target.value);
-                find_nearest_obj(e.target)._select_game(index)
-                } 
-         }
         this.active_game.set_container(this.container.querySelector('#game_container'));
-        if (this.game_state == 'new') this.active_game.state = State.settings
-        else if (this.game_state == 'running')  this.active_game.state = State.game
+        // this if needed to avoide several fetch requests from game
+        if (!(this.active_game.state == State.game  && this._state == State.game)) 
+            this.active_game.state = this._state;
+        
+        switch(this._state){
+            case State.settings: return this._show_settings()
+            case State.game: return true
+            default: throw new Error('Unknown state');                
+        }       
+    }
+
+    _show_settings(){
+        let game_selector = this.container.querySelector('#game_selector');
+        game_selector.onchange = function(e){
+            const index = Number(e.target.value);
+            this._select_game(index)
+            }.bind(this);
     }
 
     _getHTML() {
+
         let result = '<div id="game_container"></div>'
-        if (this.game_state == 'running') return result
+        if (this._state == State.game) return result
         let game_selector = `
-        <div> <label><h4>Select game:</h4> </label>
-            <select id ="game_selector" class="form-select form-select-sm">
+            <div> 
+                <label><h4>Select game:</h4> </label>
+                <select id ="game_selector" class="form-select form-select-sm">
                `
         for (let i = 0; i < this.games.length; i++) {
             game_selector += `<option value='${i}'>${this.games[i].name}</option>`
@@ -399,8 +339,7 @@ class MetaGame {
 
      _select_game(index) {
         let settings = this.active_game.save_settings()
-        this.active_game = this.games[index]
-        game = this.active_game;
+        this.active_game = this.games[index]       
         this.active_game.set_container(this.container.querySelector('#game_container'));
         this.active_game.load_settings(settings);    
         this.active_game.state = State.settings
@@ -408,13 +347,13 @@ class MetaGame {
 }
 
 document.addEventListener('DOMContentLoaded', function () {
-    meta_game = new MetaGame(document.querySelector('#meta_game_container'))
-   // meta_game.new_game()
+    const meta_game = new MetaGame(document.querySelector('#meta_game_container'))
+    
 
-    document.querySelector('#new_game_btn').onclick = (e)=> {
+    document.querySelector('#new_game_btn').onclick = function(e) {
         e.stopPropagation();
         e.preventDefault();
-        meta_game.new_game()}
+        meta_game.new_game()}.bind(meta_game)
 })
 
 

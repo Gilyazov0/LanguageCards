@@ -1,22 +1,10 @@
 $(document).ready(function() { //jQuery библиотека скриптов на JS
     $(document).on('click', '.dropdown-menu', function (e) {
         if (e.target.classList.contains('keep_open')){
-            e.stopPropagation();
-            e.preventDefault();
+            e.stopPropagation();          
         }
     }); 
 });
-
-export function find_nearest_obj(dom_element){
-    let element = dom_element
-    while (element != document && element != null) {
-        if (element.obj != undefined) {
-            return element.obj;
-        }
-        element = element.parentElement;
-    }
-    return undefined;
-}
 
 function OpenUrlInNewWindow(event){
     const element = event.target;
@@ -171,6 +159,8 @@ export class Widget extends Saveable{
         this.set_container(container)
         this.onChange = undefined
         this._state = State.default;
+        this.touchStart = null; //Точка начала касания
+        this.touchStart = null; //Текущая позиция
     }
 
     /**
@@ -220,6 +210,75 @@ export class Widget extends Saveable{
     */
     _getHTML() {
         return ''
+    }
+
+    
+    _TouchStart(e) {
+        //Получаем текущую позицию касания
+        this.touchStart = { x: e.changedTouches[0].clientX, y: e.changedTouches[0].clientY };
+        this.touchPosition = { x: this.touchStart.x, y: this.touchStart.y };
+    }
+
+    _TouchMove(e) {
+        //Получаем новую позицию
+        this.touchPosition = { x: e.changedTouches[0].clientX, y: e.changedTouches[0].clientY };
+    }
+
+    _TouchEnd(e) {
+
+        this._CheckAction(); //Определяем, какой жест совершил пользователь
+
+        //Очищаем позиции
+        this.touchStart = null;
+        this.touchPosition = null;
+    }
+    _activate_swipes(){
+        //Перехватываем события
+        this.container.ontouchstart = function (e) { this._TouchStart(e); }.bind(this); //Начало касания
+        this.container.ontouchmove = function (e) { this._TouchMove(e); }.bind(this); //Движение пальцем по экрану
+        //Пользователь отпустил экран
+        this.container.ontouchend = function(e) { this._TouchEnd(e); }.bind(this);
+        //Отмена касания
+        this.container.ontouchcancel =  function (e) { this._TouchEnd(e); }.bind(this);
+    }
+
+    _swipe_left(){}
+    
+    _swipe_right(){}
+
+    _swipe_up(){}
+
+    _swipe_down(){}
+
+    _CheckAction() {
+        const sensitivity = 20;
+        var d = //Получаем расстояния от начальной до конечной точек по обеим осям
+        {
+            x: this.touchStart.x - this.touchPosition.x,
+            y: this.touchStart.y - this.touchPosition.y
+        };
+       
+        if (Math.abs(d.x) > Math.abs(d.y)) //Проверяем, движение по какой оси было длиннее
+        {
+            if (Math.abs(d.x) > sensitivity) //Проверяем, было ли движение достаточно длинным
+            {
+                if (d.x > 0) //Если значение больше нуля, значит пользователь двигал пальцем справа налево               
+                    this._swipe_left();
+                
+                else //Иначе он двигал им слева направо                
+                    this._swipe_right();                  
+            }
+        }
+        else //Аналогичные проверки для вертикальной оси
+        {
+            if (Math.abs(d.y) > sensitivity) {
+                if (d.y > 0) //Свайп вверх
+                    this._swipe_up();              
+                else //Свайп вниз
+                    this._swipe_down();
+                
+            }
+        }
     }
 }
 
@@ -311,7 +370,8 @@ export class Timer extends Widget{
      /** @override */
     _getHTML() {
         return `<div> ${this.value}    ${this.state.name}  </div>`
-    }     
+    }
+         
 }
 
 
@@ -342,14 +402,14 @@ export class Tag_selector extends Widget{
         
         this._update_selected_tags_dom()       
         this._show_selected_tags()       
-        $(this.container).on('click', '.form-check-input', function (e) {              
-          const tag_selector = find_nearest_obj(e.target)              
-          if (tag_selector != undefined){
-              tag_selector._update_selected_tags();
-              tag_selector.show();
-          }            
-        }); 
+        $(this.container).on('click', '.form-check-input', this._form_check_input_onClick.bind(this)); 
         return true    
+    }
+
+    _form_check_input_onClick(e){
+        this._update_selected_tags();
+        this._show_selected_tags();
+        //this.show();
     }
 
     _get_tag_by_id(tag_id){
@@ -373,11 +433,7 @@ export class Tag_selector extends Widget{
                 this.selected_tags.push(Number(tag_selectors[i].getAttribute('tag_id_data')))
 
             }
-        }
-        // this._show_selected_tags()
-        // if (this.tag_selector_set != undefined){
-        //     this.tag_selector_set.change()
-        // }
+        }        
         this._change({'event_name':'tags_changed'})
     }    
 
@@ -402,16 +458,16 @@ export class Tag_selector extends Widget{
         
         let common_tags_html = ''
         for (let i = 0; i < this.tags.length; i++) {
-            common_tags_html += `<div class="form-check">
-                                     <input type="checkbox" class="form-check-input tag_selector" tag_id_data ='${this.tags[i].id}' id="dropdownCheck${this.tags[i].id}">
+            common_tags_html += `<div class="form-check keep_open">
+                                     <input type="checkbox" class="form-check-input tag_selector keep_open" tag_id_data ='${this.tags[i].id}' id="dropdownCheck${this.tags[i].id}">
                                      <label class="form-check-label keep_open" for="dropdownCheck${this.tags[i].id}">
                                      ${this.tags[i].name}
                                  </label> </div>`
         }
         let personal_tags_html = ''
         for (let i = 0; i < this.user_tags.length; i++) {
-            personal_tags_html += `<div class="form-check">
-                                 <input type="checkbox" class="form-check-input tag_selector" tag_id_data ='${this.user_tags[i].id}' id="dropdownCheck${this.user_tags[i].id}">
+            personal_tags_html += `<div class="form-check keep_open">
+                                 <input type="checkbox" class="form-check-input tag_selector keep_open" tag_id_data ='${this.user_tags[i].id}' id="dropdownCheck${this.user_tags[i].id}">
                                  <label class="form-check-label keep_open" for="dropdownCheck${this.user_tags[i].id}">
                                  ${this.user_tags[i].name}
                                  </label>  </div>`
@@ -423,11 +479,11 @@ export class Tag_selector extends Widget{
                 <span class="caret"></span></button>
             <div class="dropdown-menu keep_open">
                 <p class="mb-0  keep_open">Personal tags.</p>
-                <div style="display: flex; justify-content:last baseline; flex-wrap: wrap">
+                <div style="display: flex; justify-content:last baseline; flex-wrap: wrap keep_open">
                     ${personal_tags_html}
                 </div>
                 <p class="mb-0  keep_open">   Common tags. </p>
-                <div style="display: flex; justify-content:last baseline; flex-wrap: wrap">
+                <div style="display: flex; justify-content:last baseline; flex-wrap: wrap keep_open">
                     ${common_tags_html}
                 </div>             
             </div>
@@ -501,10 +557,7 @@ export class Tag_selector_set extends Widget{
             this.tag_selectors[i]['exclude'].show();
         }
 
-        this.container.querySelector('#add-tag-selectors-btn').onclick = function (event) { 
-            find_nearest_obj(event.target).add_tag_selectors_pair();           
-        };
-
+        this.container.querySelector('#add-tag-selectors-btn').onclick =this.add_tag_selectors_pair.bind(this);         
     }
  
     // return [{'include':[tag_id, ..], 'exclude':[tag_id, ...]} ...]

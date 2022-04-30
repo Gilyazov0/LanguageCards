@@ -1,7 +1,6 @@
-import {Card_set,Card, Tag_selector,Tag_selector_set,Settings, Widget, State} from './card_set.js'
+import {Card_set,Card, Tag_selector,Tag_selector_set,Settings, Widget, State, Timer} from './card_set.js'
 
-class Game extends Widget {
-    // методы класса
+class Abstract_game extends Widget{
     constructor(owner,tags,user_tags,FAs,container=undefined) {
         super(owner, container)
         
@@ -9,34 +8,35 @@ class Game extends Widget {
         this.tags = tags; //[{'name':name,'id': id},{}...]
         this.user_tags = user_tags;//[{'name':name,'id': id},{}...]
         this.FAs = FAs;//[FA1_name,FA2_name...]
-        this.selected_tags = undefined;
-        this.active_card_obj = undefined;       
-        this.active_card_container = undefined; //DOM элемент содержащий текущую карту
+        this.selected_tags = undefined;            
         this.tag_selectors_set = undefined;
         this.settings = undefined; // Settings instance
-        this.name = 'Simple game'
+        this.name = 'Abstract game'
         let captions = {'include':'Add cards with tags:','exclude':'except cards with tags:'}
         this.tag_selectors_set =  new Tag_selector_set(this, this.user_tags, this.tags, captions); 
         this.front_attribute = undefined;        
         this.back_attributes = undefined;
+        this.wrong_answers = 0;
+        this.right_answers = 0;
         this._set_state(State.settings,false) 
-
+        
     }   
+
     /**
     * @param {State} value 
     */
-    set state(value) {         
-        this._set_state(value, false)        
+    set state(value) {
+        this._set_state(value, false)
         this.show()
     }
 
     /**
     * @return {State}
     */
-    get state(){
+    get state() {
         return super.state
-    }   
-     
+    } 
+
     show(){
         if (!super.show()) return false;
         switch(this._state){
@@ -47,6 +47,8 @@ class Game extends Widget {
     }
 
     start(){
+        this.wrong_answers = 0;
+        this.right_answers = 0;
         this._set_state(State.game, true)
         this.show()        
     }
@@ -66,16 +68,16 @@ class Game extends Widget {
         return this.settings
     }
 
+          
     /**
     * 
     * @param {State} new_state 
     * @param {Boolean} throw_onChange 
     */
-    _set_state(new_state, throw_onChange = false) {
+     _set_state(new_state, throw_onChange = false) {
         if (this._state = State.settings) this._update_selected_settings()
         super._set_state(new_state, throw_onChange)
     }
-
     _show_settings(){
         let ts_container =  this.container.querySelector('#tag_selectors_container');
         this.tag_selectors_set.set_container(ts_container)
@@ -86,16 +88,11 @@ class Game extends Widget {
         this.container.querySelector('#start-game-btn').onclick = function (e) { this.start()}.bind(this);
        
         this._update_settings_page()
+        
+        return true;
     }
 
-    _show_game(){      
-
-        this.active_card_container = this.container.querySelector('#current_card');
-     
-        this.container.querySelector('#show-prev-card-btn').onclick = this._show_new_card.bind(this,'left') ;
-        this.container.querySelector('#show-next-card-btn').onclick = this._show_new_card.bind(this,'right');
-        this.container.querySelector('#reverse-card-btn').onclick = function () {this.active_card_obj.reverse();}.bind(this);
-        this._activate_swipes()
+    _show_game(){     
 
         fetch('../get_cards', {
             method: 'POST',
@@ -108,8 +105,9 @@ class Game extends Widget {
                 this.card_set = new Card_set(this, result.cards, result.tags, this.front_attribute, this.back_attributes);
                 this._update_game_page()
             })
+        return true;
     }
-        
+
     _update_selected_settings(){
         
         const FA_selector = this.container?.querySelector('#FA_selector')
@@ -121,7 +119,7 @@ class Game extends Widget {
         let back_attributes = [...this.FAs];
         this.back_attributes = back_attributes.filter((value)=>{return value !=this.front_attribute[0]});
     }
-   
+
     _getHTML(){    
         switch(this._state){
             case State.settings: return this._getHTML_settings()
@@ -149,6 +147,7 @@ class Game extends Widget {
                 <h1>Number of cards in game</h1>
             </div>
             <div>${FA_selector}</div> 
+            <div id='additional_settings'> </div> 
             <div id ='tag_selectors_container'></div>                           
             <div class="alert alert-primary" style="padding:10px">                                  
                 <div style="text-align: center" >
@@ -162,36 +161,9 @@ class Game extends Widget {
     }
 
     _getHTML_game(){
-
-        const error_message = `
-        <div id="empty_card_set" style="display:none">
-            <div class="alert alert-danger" role="alert">
-            <h1>Card set is empty</h1>
-            </div>
-
-            <form action="/Cards/game/">   
-                <div style="text-align: center; padding:10px"> 
-                    <input type="submit" class="btn btn-primary game-control" value = "Start new game"></input>
-                </div>
-            </form>
-        </div>
-        `
-
-        const game = `
-        <div id="full_card_set" style="display:none">
-        <div id = 'current_card'></div>
-        <div class = "game-control-bar">    
-        <button class="btn btn-primary game-control" id="show-prev-card-btn" ><h1><i class="bi bi-arrow-left"></i> </h1></button>
-        <button class="btn btn-primary game-control " id="reverse-card-btn" ><h1><i class="bi bi-arrow-repeat"></i> </h1></button>
-        <button class="btn btn-primary game-control" id="show-next-card-btn"  ><h1><i class="bi bi-arrow-right"></i></h1></button>
-        </div>
-        </div>`;
-
-        const loading =  `<div id="loading"><div class="alert alert-primary" role="alert"> <h1>Loading... Продам гараж </h1> </div></div>`
-
-        return loading + error_message + game
+        return "<div>Game over</div>"
     }
-  
+
     _update_settings_page(){
         
         this.selected_tags = this.get_selected_tags();        
@@ -218,13 +190,92 @@ class Game extends Widget {
                             }
                         }
                     })
-    }       
-  
+    } 
+
+    _update_game_page() {        
+    }
+
+
+}
+
+class Simple_game extends Abstract_game {
+     
+    constructor(owner,tags,user_tags,FAs,container=undefined) {
+        super(owner,tags,user_tags,FAs,container=undefined)        
+       
+        this.active_card_obj = undefined;       
+        this.active_card_container = undefined; //DOM элемент содержащий текущую карту        
+        this.name = 'Simple game'   
+        this.display_score = false;    
+    }     
+    
+    _show_game(){      
+
+        this.active_card_container = this.container.querySelector('#current_card');
+     
+        this.container.querySelector('#show-prev-card-btn').onclick = this._show_new_card.bind(this,'left') ;
+        this.container.querySelector('#show-next-card-btn').onclick = this._show_new_card.bind(this,'right');
+        this.container.querySelector('#reverse-card-btn').onclick = function () {this.active_card_obj.reverse();}.bind(this);
+        this._activate_swipes()
+
+        return super._show_game();      
+    }
+
+    _getHTML_game_blocks(){
+        result = {}
+        
+    }
+ 
+    _getHTML_game(){
+
+        const error_message = `
+        <div id="empty_card_set" style="display:none">
+            <div class="alert alert-danger" role="alert">
+            <h1>Card set is empty</h1>
+            </div>
+
+            <form action="/Cards/game/">   
+                <div style="text-align: center; padding:10px"> 
+                    <input type="submit" class="btn btn-primary game-control" value = "Start new game"></input>
+                </div>
+            </form>
+        </div>
+        `
+        
+        const game = `
+        <div id="full_card_set" style="display:none">
+        <div id="score" class = "game-control-bar" style="display:none">
+            <h3>
+                <span id = "right_answers" class="badge badge-success">12</span>
+                <span id = "wrong_answers" class="badge badge-danger">11</span>
+            </h3> 
+         </div>
+        <div id = "current_card"></div>
+        <div id = "aditional_controls"> </div>
+        <div class = "game-control-bar">    
+        <button class="btn btn-primary game-control" id="show-prev-card-btn" ><h1><i class="bi bi-arrow-left"></i> </h1></button>
+        <button class="btn btn-primary game-control " id="reverse-card-btn" ><h1><i class="bi bi-arrow-repeat"></i> </h1></button>
+        <button class="btn btn-primary game-control" id="show-next-card-btn"  ><h1><i class="bi bi-arrow-right"></i></h1></button>
+        </div>
+        </div>`;
+
+        const loading =  `<div id="loading"><div class="alert alert-primary" role="alert"> <h1>Loading... Продам гараж </h1> </div></div>`
+
+        return loading + error_message + game
+    }  
+     
     _update_game_page() {
         const card_set = this.card_set;
         const empty_card_set = this.container.querySelector('#empty_card_set')
         const full_card_set = this.container.querySelector('#full_card_set')
         this.container.querySelector('#loading').style.display = 'none' 
+        const score = this.container.querySelector('#score')
+        if (this.display_score){
+            score.style.display = 'block'
+            score.querySelector('#wrong_answers').innerHTML = this.wrong_answers;
+            score.querySelector('#right_answers').innerHTML = this.right_answers;
+        }
+        else score.style.display = 'none'
 
         if (card_set.cards_count() == 0) {
             empty_card_set.style.display = 'block'
@@ -267,6 +318,132 @@ class Game extends Widget {
     }
 }
 
+class Print_game extends Simple_game {
+     
+    constructor(owner,tags,user_tags,FAs,container=undefined) {
+        super(owner,tags,user_tags,FAs,container=undefined)        
+        this.answer_attribute = 'На иврите'
+        this.name = 'Print game'   
+        this.answer_time = 60;   
+        this.timer = new Timer(this,this.answer_time,undefined) 
+        this.display_score = true;
+        this.user_answers = {};//{card_id: Is_right}
+    } 
+    start(){
+        this.user_answers = {}
+        super.start()
+    }
+
+    _show_settings(){
+        super._show_settings();
+
+      let answer_time = ` 
+        <div >
+            <label for="answer_time"><h4>Answer time:</h4></label>
+            <input id='answer_time' type="number" class="" value=${this.answer_time} />           
+        </div>`
+        
+        let answer_type = `
+        <div> <label><h4>Answer type:</h4> </label>
+            <select id ="answer_type" class="form-select form-select-sm">
+               `
+        for (let i = 0; i < this.FAs.length; i++) {
+            let selected = this.FAs[i] == this.answer_attribute? 'selected="selected"':''
+             
+            answer_type += `<option  ${selected} value='${this.FAs[i]}'>${this.FAs[i]}</option>`
+        }   
+        answer_type += '</select></div>'
+
+        const additional_settings = this.container.querySelector('#additional_settings');
+        additional_settings.innerHTML = answer_type + answer_time;
+         
+    }
+
+    _update_selected_settings(){
+        super._update_selected_settings()
+ 
+        const answer_type = this.container?.querySelector('#answer_type')
+        if (!answer_type) return
+        this.answer_attribute = answer_type.value;
+
+        const answer_time = this.container?.querySelector('#answer_time')
+        this.answer_time = Number(answer_time.value);
+       
+        this.timer.reset(this.answer_time);
+    }
+ 
+
+    _getHTML_aditional_controls(){
+        return `<div class="game-control-bar mb-3">
+                    <div class="col-auto-1 flex-grow-1 mr-1">
+                         <input id="answer" placeholder="${this.answer_attribute}" class="form-control" 
+                         type="text" required autofocus>
+                    </div>
+                    <div class="col-auto-1">
+                        <button id="answer_button" class="form-control btn btn-primary">answer</button>
+                    </div>
+                    <div id = "timer_container" class="col-auto-1">
+                    </div>
+                </div>`
+    }
+    _timer_change(timer,event){
+        if (this.timer.state == State.stopped) this._check_answer()
+    }
+
+    _is_answered(){
+        return (this.user_answers[this.active_card_obj?.get_id()] !==undefined)     
+    }
+    _check_answer(){
+
+        if (this._is_answered()) return
+
+        let answer = this.container.querySelector("#answer")
+        let is_right = false;
+        if (answer.value == this.active_card_obj.get_FA_value(this.answer_attribute)){
+            is_right = true; 
+            this.right_answers++;
+        }
+        else {
+            is_right = false; 
+            this.wrong_answers++
+        }   
+     
+        this.user_answers[this.active_card_obj.get_id()] =is_right; 
+ 
+        if (this.active_card_obj.is_front_side) this.active_card_obj.reverse()
+        this._update_game_page(); 
+    }
+
+    _show_new_card(direction) {  
+        super._show_new_card(direction);
+    }
+
+    _show_game(){
+        let aditional_controls = this.container.querySelector("#aditional_controls")
+        aditional_controls.innerHTML = this._getHTML_aditional_controls()
+        let timer_container = this.container.querySelector("#timer_container")
+        this.timer.set_container(timer_container)
+        this.timer.start()
+        this.timer.onChange = this._timer_change.bind(this)
+        let answer_button = this.container.querySelector("#answer_button")
+        answer_button.onclick = this._check_answer.bind(this);
+        let answer = this.container.querySelector("#answer")
+        answer.onchange = this._check_answer.bind(this);
+        return super._show_game();
+    } 
+
+    _update_game_page() {
+        if (!this._is_answered()){
+            this.timer.reset();
+            this.timer.start();
+        } 
+        let answer = this.container.querySelector("#answer")
+        answer.value = ''
+        super._update_game_page()
+    }
+}    
+
+
 class MetaGame extends Widget{
     constructor(container) {
         super(undefined,container)            
@@ -281,7 +458,7 @@ class MetaGame extends Widget{
                 const tags = result.tags;
                 const user_tags = result.user_tags;
                 const FAs = result.FAs;
-                this.games = [new Game(this,tags,user_tags,FAs), new Game(this,tags,user_tags,FAs)]
+                this.games = [new Print_game(this,tags,user_tags,FAs), new Simple_game(this,tags,user_tags,FAs)]
                 this.active_game = this.games[0];               
                 this.new_game()
             })   

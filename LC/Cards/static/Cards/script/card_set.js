@@ -369,7 +369,8 @@ export class Timer extends Widget{
 
      /** @override */
     _getHTML() {
-        return `<div> ${this.value}    ${this.state.name}  </div>`
+        return `<div style='width:100px;height: 100%;display:flex;justify-content:center'> <h3><div style='width:4rem;height: 100%;' class="badge badge-primary">
+        ${this.value}</div></h3></div>`
     }
          
 }
@@ -701,6 +702,9 @@ export class Card extends Widget{
         }
     }
 
+    get_FA_value(FA_name){
+        return this.card_data.FAs[FA_name]
+    }
      
     _tag_onclick(event) {
         const card = event.target.card; //!!! убрать

@@ -168,38 +168,6 @@ def get_card_set_data(cards, user):
 
     return result
 
-# @csrf_exempt
-# def get_cards(request):
-#     data = json.loads(request.body) #{filter:[{'include':[tag_id, ..], 'exclude':[tag_id, ...]} ...]}
-#     filter = data['filter']
-#     cards_result = None
-#     for index, tags_pair in enumerate(filter):
-        
-#         cards = Card.objects.all()
-#         tags_include = tags_pair.get("include", [])
-#         tags_exclude = tags_pair.get("exclude", [])
-#         if index > 0 and len(tags_include)== 0 and len(tags_exclude) == 0:
-#             continue
-
-#         for tag in tags_include:
-#             cards = cards.filter(tags__id=tag)
-#         for tag in tags_exclude:
-#             cards = cards.exclude(tags__id=tag)
-#         if cards_result == None:
-#             cards_result = cards
-#         else:
-#             cards_result = cards_result.union(cards)
-        
-#     cards_dict = {}
-#     cards_order = []
-#     for card in cards_result:        
-#         cards_dict[card.id] = card.serialize(request.user)
-#         cards_order.append(card.id)
-#     shuffle(cards_order)
-#     result = {}
-#     result['cards'] = {'cards': cards_dict, 'order': cards_order}
-#     result['tags'] = get_tags_dict(request.user)
-
 #     return JsonResponse(result, safe=False)
 
 def get_tags_dict(user,add_common_tags = True):

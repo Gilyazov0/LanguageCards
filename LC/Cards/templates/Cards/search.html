@@ -17,7 +17,8 @@
         const index = FAs.indexOf(defaultFA);
         if (index>-1) FAs.splice(index, 1)
        
-        let card_set= new Card_set(obj.cards, obj.tags, [defaultFA], FAs);
+        const owner = undefined;
+        let card_set= new Card_set(owner, obj.cards, obj.tags, [defaultFA], FAs);
 
         for (let i=0; i < card_set.cards_count();i++){
             const container = document.querySelector(`#card_container${i}`);

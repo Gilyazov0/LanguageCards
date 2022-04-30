@@ -1,15 +1,15 @@
-import {Card_set,Card, Tag_selector,Tag_selector_set,Settings,find_nearest_obj} from './card_set.js'
+import {Card_set,Card, Tag_selector,Tag_selector_set,Settings,find_nearest_obj, Widget, State} from './card_set.js'
 
 //var game
 var meta_game
 var game
 
 //assumming that "game" is global variable, need to find a way to avoid this (see start()).
-class Game {
+class Game extends Widget {
     // методы класса
-    constructor(tags,user_tags,FAs,container=undefined) {
-
-        this.set_container(container); // DOM элемент содержащий игру
+    constructor(owner,tags,user_tags,FAs,container=undefined) {
+        super(owner, container)
+        
         this.card_set = undefined;
         this.tags = tags; //[{'name':name,'id': id},{}...]
         this.user_tags = user_tags;//[{'name':name,'id': id},{}...]
@@ -23,14 +23,35 @@ class Game {
         this.settings = undefined; // Settings instance
         this.name = 'Simple game'
         let captions = {'include':'Add cards with tags:','exclude':'except cards with tags:'}
-        this.tag_selectors_set =  new Tag_selector_set (this.user_tags, this.tags, captions,);   
+        this.tag_selectors_set =  new Tag_selector_set(this, this.user_tags, this.tags, captions); 
+        this.front_attribute = undefined;        
+        this.back_attributes = undefined;
+        this._set_state(State.settings,false) 
+
+    }   
+    /**
+    * @param {State} value 
+    */
+    set state(value) {         
+        this._set_state(value, false)        
+        this.show()
     }
 
-    set_container(container){
-        this.container = container;
-        if (container != undefined) {
-            this.container.obj = this;
-        } 
+    /**
+    * @return {State}
+    */
+    get state(){
+        return super.state
+    }
+
+     /**
+     * 
+     * @param {State} new_state 
+     * @param {Boolean} throw_onChange 
+     */
+      _set_state(new_state, throw_onChange = false){
+        if (this._state = State.settings) this._update_selected_settings()
+        super._set_state(new_state, throw_onChange)
     }
 
     load_settings(settings){
@@ -44,41 +65,146 @@ class Game {
         return this.settings
     }
      
-    new_game() {
+    show(){
+        if (!super.show()) return false;
+        switch(this._state){
+            case State.settings: return this.show_settings()
+            case State.game: return this.show_game()
+            default: throw new Error('Unknown state');                
+        }        
+    }
+
+    show_settings(){
+        let ts_container =  this.container.querySelector('#tag_selectors_container');
+        this.tag_selectors_set.set_container(ts_container)
+        this.tag_selectors_set.show()
         
-        let FA_selector =`
-                 <div> <label><h4>Front side:</h4> </label>
-                     <select id ="FA_selector" class="form-select form-select-sm">
-                        `
+        this.tag_selectors_set.onChange = function(){ meta_game.active_game.update_settings_page() };
+        
+        this.container.querySelector('#start-game-btn').onclick = function (e) { find_nearest_obj(e.target).start()};
+       
+        this.update_settings_page()
+    }
+    start(){
+        this._set_state(State.game, true)
+        this.show()        
+    }
+
+    _update_selected_settings(){
+        
+        const FA_selector = this.container?.querySelector('#FA_selector')
+        if (!FA_selector) return
+
+        this.selected_tags = this.get_selected_tags();
+        this.front_attribute = [this.container.querySelector('#FA_selector').value];
+        
+        let back_attributes = [...this.FAs];
+        this.back_attributes = back_attributes.filter((value)=>{return value !=this.front_attribute[0]});
+    }
+
+    show_game(){      
+
+        this.active_card_container = this.container.querySelector('#current_card');
+     
+        this.container.querySelector('#show-prev-card-btn').onclick = function (e) {find_nearest_obj(e.target).show_new_card('left') };
+        this.container.querySelector('#show-next-card-btn').onclick = function (e) { find_nearest_obj(e.target).show_new_card('right') };
+        this.container.querySelector('#reverse-card-btn').onclick = function (e) { find_nearest_obj(e.target).active_card_obj.reverse();};
+        //Перехватываем события
+        this.container.addEventListener("touchstart", function (e) { find_nearest_obj(e.target).TouchStart(e); }); //Начало касания
+        this.container.addEventListener("touchmove", function (e) { find_nearest_obj(e.target).TouchMove(e); }); //Движение пальцем по экрану
+        //Пользователь отпустил экран
+        this.container.addEventListener("touchend", function (e) { find_nearest_obj(e.target).TouchEnd(e); });
+        //Отмена касания
+        this.container.addEventListener("touchcancel", function (e) { find_nearest_obj(e.target).TouchEnd(e); });
+
+        fetch('../get_cards', {
+            method: 'POST',
+            body: JSON.stringify({
+                tag_filter: this.selected_tags
+            })
+        }
+        )
+            .then(response => response.json())
+            .then(result => {                
+                this.card_set = new Card_set(this, result.cards, result.tags, this.front_attribute, this.back_attributes);
+                this.update_game_page()
+            })
+    }
+
+   
+    _getHTML(){    
+        switch(this._state){
+            case State.settings: return this._getHTML_settings()
+                          
+            case State.game: return this._getHTML_game()
+
+            default: throw new Error('Unknown state'); 
+        }         
+    }
+
+    _getHTML_settings(){
+        let result = ''
+
+        let FA_selector = `
+            <div> <label><h4>Front side:</h4> </label>
+                <select id ="FA_selector" class="form-select form-select-sm">
+                   `
         for (let i = 0; i < this.FAs.length; i++) {
             FA_selector += `<option value='${this.FAs[i]}'>${this.FAs[i]}</option>`
         }
         FA_selector += '</select></div>'
         this.container.style.padding = "5px";
-        this.container.innerHTML = `
-            
-            <div class="alert alert-primary" id="lable-cards-count" > <h1>Number of cards in game</h1></div>
+        result = ` 
+            <div class="alert alert-primary" id="lable-cards-count" >
+                <h1>Number of cards in game</h1>
+            </div>
             <div>${FA_selector}</div> 
-            <div id ='tag_selectors_container'></div>   
-               
+            <div id ='tag_selectors_container'></div>                           
             <div class="alert alert-primary" style="padding:10px">                                  
-            <div style="text-align: center" > <button class="btn btn-primary game-control" id = 'start-game-btn'><h1> start game </h1></button> </div>
-            </div>`  
+                <div style="text-align: center" >
+                    <button class="btn btn-primary game-control" id = 'start-game-btn'>
+                        <h1> start game </h1>
+                    </button> 
+                </div>
+            </div>` 
 
-        let ts_container =  this.container.querySelector('#tag_selectors_container');
-        this.tag_selectors_set.set_container(ts_container)
-        this.tag_selectors_set.show()
-        
-        this.tag_selectors_set.onChange = function(){ meta_game.active_game.update_new_game_page() };
-        
-        this.container.querySelector('#start-game-btn').onclick = function (e) { find_nearest_obj(e.target).start_game()};
-       
-        this.update_new_game_page()
+        return result                 
+    }
+
+    _getHTML_game(){
+
+        const error_message = `
+        <div id="empty_card_set" style="display:none">
+            <div class="alert alert-danger" role="alert">
+            <h1>Card set is empty</h1>
+            </div>
+
+            <form action="/Cards/game/">   
+                <div style="text-align: center; padding:10px"> 
+                    <input type="submit" class="btn btn-primary game-control" value = "Start new game"></input>
+                </div>
+            </form>
+        </div>
+        `
+
+        const game = `
+        <div id="full_card_set" style="display:none">
+        <div id = 'current_card'></div>
+        <div class = "game-control-bar">    
+        <button class="btn btn-primary game-control" id="show-prev-card-btn" ><h1><i class="bi bi-arrow-left"></i> </h1></button>
+        <button class="btn btn-primary game-control " id="reverse-card-btn" ><h1><i class="bi bi-arrow-repeat"></i> </h1></button>
+        <button class="btn btn-primary game-control" id="show-next-card-btn"  ><h1><i class="bi bi-arrow-right"></i></h1></button>
+        </div>
+        </div>`;
+
+        const loading =  `<div id="loading"><div class="alert alert-primary" role="alert"> <h1>Loading...</h1> </div></div>`
+
+        return loading + error_message + game
     }
  
-    update_new_game_page(){
-
-        //this.tag_selectors_set.show();
+ 
+    update_settings_page(){
+        
         this.selected_tags = this.get_selected_tags();        
 
                 fetch('../get_cards', {
@@ -108,64 +234,20 @@ class Game {
     get_selected_tags() {
         return this.tag_selectors_set.get_selected_tags();        
     }
-
-    start_game() {
-        this.selected_tags = this.get_selected_tags();
-
-        const front_attribute = [this.container.querySelector('#FA_selector').value];
-        let back_attributes = [...this.FAs];
-        back_attributes = back_attributes.filter((value)=>{return value !=front_attribute[0]});
-     
-        this.container.innerHTML = `
-        <div id = 'current_card'></div>
-        <div class = "game-control-bar">    
-        <button class="btn btn-primary game-control" id="show-prev-card-btn" ><h1><i class="bi bi-arrow-left"></i> </h1></button>
-        <button class="btn btn-primary game-control " id="reverse-card-btn" ><h1><i class="bi bi-arrow-repeat"></i> </h1></button>
-        <button class="btn btn-primary game-control" id="show-next-card-btn"  ><h1><i class="bi bi-arrow-right"></i></h1></button>
-        </div>`;
-        this.active_card_container = this.container.querySelector('#current_card');
-
-        //assumming that "game" is global variable, need to find a way to avoid this.
-        this.container.querySelector('#show-prev-card-btn').onclick = function (e) {find_nearest_obj(e.target).show_new_card('left') };
-        this.container.querySelector('#show-next-card-btn').onclick = function (e) { find_nearest_obj(e.target).show_new_card('right') };
-        this.container.querySelector('#reverse-card-btn').onclick = function (e) { find_nearest_obj(e.target).active_card_obj.reverse();};
-        //Перехватываем события
-        this.container.addEventListener("touchstart", function (e) { find_nearest_obj(e.target).TouchStart(e); }); //Начало касания
-        this.container.addEventListener("touchmove", function (e) { find_nearest_obj(e.target).TouchMove(e); }); //Движение пальцем по экрану
-        //Пользователь отпустил экран
-        this.container.addEventListener("touchend", function (e) { find_nearest_obj(e.target).TouchEnd(e); });
-        //Отмена касания
-        this.container.addEventListener("touchcancel", function (e) { find_nearest_obj(e.target).TouchEnd(e); });
-
-        fetch('../get_cards', {
-            method: 'POST',
-            body: JSON.stringify({
-                tag_filter: this.selected_tags
-            })
-        }
-        )
-            .then(response => response.json())
-            .then(result => {                
-                this.card_set = new Card_set(result.cards, result.tags, front_attribute, back_attributes);
-                this.update_game_page()
-            })
-    }
-
+  
     update_game_page() {
         const card_set = this.card_set;
-        if (card_set.cards_count() == 0) {
-            this.container.innerHTML = `<div class="alert alert-danger" role="alert">
-                                           <h1>Card set is empty</h1>
-                                     </div>
+        const empty_card_set = this.container.querySelector('#empty_card_set')
+        const full_card_set = this.container.querySelector('#full_card_set')
+        this.container.querySelector('#loading').style.display = 'none' 
 
-                                     <form action="/Cards/game/">   
-                                        <div style="text-align: center; padding:10px"> 
-                                             <input type="submit" class="btn btn-primary game-control" value = "Start new game"></input>
-                                        </div>
-                                     </form>
-                                     `
+        if (card_set.cards_count() == 0) {
+            empty_card_set.style.display = 'block'
+            full_card_set.style.display = 'none'                       
         }
         else {
+            empty_card_set.style.display = 'none'
+            full_card_set.style.display = 'block'      
             this.container.querySelector('#show-prev-card-btn').disabled = (card_set.get_current_card_number() <= 0);
             this.container.querySelector('#show-next-card-btn').disabled = (card_set.get_current_card_number() >= card_set.cards_count() - 1);
       
@@ -265,7 +347,7 @@ class MetaGame {
                 const tags = result.tags;
                 const user_tags = result.user_tags;
                 const FAs = result.FAs;
-                this.games = [new Game(tags,user_tags,FAs), new Game(tags,user_tags,FAs)]
+                this.games = [new Game(this,tags,user_tags,FAs), new Game(this,tags,user_tags,FAs)]
                 this.active_game = this.games[0];
                 game = this.active_game;
                 this.new_game()
@@ -295,8 +377,8 @@ class MetaGame {
                 } 
          }
         this.active_game.set_container(this.container.querySelector('#game_container'));
-        if (this.game_state == 'new') {this.active_game.new_game()}
-        else if (this.game_state == 'running')  this.active_game.start_game()
+        if (this.game_state == 'new') this.active_game.state = State.settings
+        else if (this.game_state == 'running')  this.active_game.state = State.game
     }
 
     _getHTML() {
@@ -321,7 +403,7 @@ class MetaGame {
         game = this.active_game;
         this.active_game.set_container(this.container.querySelector('#game_container'));
         this.active_game.load_settings(settings);    
-        this.active_game.new_game();
+        this.active_game.state = State.settings
      }
 }
 
@@ -336,6 +418,7 @@ document.addEventListener('DOMContentLoaded', function () {
 })
 
 
-
+State.get_or_create_state('settings')
+State.get_or_create_state('game')
 
 

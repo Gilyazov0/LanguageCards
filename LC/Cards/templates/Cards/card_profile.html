@@ -15,7 +15,8 @@
     document.addEventListener('DOMContentLoaded', function () {
         const element = document.querySelector('#data');
         const container = document.querySelector('#card_container');
-        let card = Card.create_from_JSON_strings(element.getAttribute('card_data'), element.getAttribute('tags_data'), container)
+        const owner = undefined;
+        let card = Card.create_from_JSON_strings(owner, element.getAttribute('card_data'), element.getAttribute('tags_data'), container)
         card.card_set.CSRF_TOKEN = CSRF_TOKEN;
         card.show()
      })

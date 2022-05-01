@@ -504,10 +504,11 @@ class MetaGame extends Widget{
 
         let result = '<div id="game_container"></div>'
         if (this._state == State.game) return result
+
         let game_selector = `
             <div> 
-                <label><h4>Select game:</h4> </label>
-                <select id ="game_selector" class="form-select form-select-sm">
+                <label class="form-control-lg label-gp">Select game:</label>
+                <select id ="game_selector" class="form-control-lg form-select-lg input-gp flex-grow-1">
                `
         for (let i = 0; i < this.games.length; i++) {
             game_selector += `<option value='${i}'>${this.games[i].name}</option>`

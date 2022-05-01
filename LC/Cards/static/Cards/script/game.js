@@ -327,7 +327,7 @@ class Print_game extends Simple_game {
         this.answer_attribute = 'На иврите'
         this.name = 'Print game'   
         this.answer_time = 60;   
-        this.timer = new Timer(this,this.answer_time,undefined) 
+        this.timer = new Timer(this,this.answer_time,'1.5rem') 
         this.display_score = true;
         this.user_answers = {};//{card_id: Is_right}
     } 
@@ -507,7 +507,7 @@ class MetaGame extends Widget{
 
         let game_selector = `
             <div style='padding:5px'> 
-                <label class="form-control-lg label-gp">Select game:</label>
+                <label class="form-control-lg label-gp">Select game type:</label>
                 <select id ="game_selector" class="form-control-lg form-select-lg input-gp flex-grow-1">
                `
         for (let i = 0; i < this.games.length; i++) {

@@ -7,21 +7,29 @@
         import {Timer,State} from "{% static 'Cards/script/card_set.js' %}";
         
         document.addEventListener('DOMContentLoaded', function () {
+            let font_size = '50px';
             let container = document.querySelector('#timer0');
-            var timer0 = new Timer(document,8,container);
+            var timer0 = new Timer(document,118,undefined,container);
             timer0.onChange = function(timer,event){
-                if (timer.state == State.stopped){
-                timer1.reset(); timer1.start()
-                }
-            }            
+               // if (timer.state == State.stopped){
+               // timer1.reset(); timer1.start()
+               if (timer.state == State.running) timer.stop()
+                
+          }            
             container = document.querySelector('#timer1');
-            var timer1 = new Timer(document,7,container);
+            var timer1 = new Timer(document,7777,undefined,container);
             timer1.onChange = function(timer,event){
-                if (timer.state == State.stopped){
-                timer0.reset(); timer0.start()
-                }
+               // if (timer.state == State.stopped){
+                if (timer.state == State.running) timer.stop()
+               // timer0.reset(); timer0.start()
+                
             }      
            timer0.start()
+           timer1.start()
+
+          
+         //  timer0.disable()
+          // timer1.disable()
         })
     </script>
 {% endblock %}
@@ -29,8 +37,8 @@
 {% block content %}
 <div id = 'meta_game_container'></div>
 
-<div id = 'timer0'> </div>
-<div id = 'timer1'> </div>
+<div id = 'timer0' style="width: 100px; height: 100px; border: 1px solid;"> </div>
+<div id = 'timer1'> 111</div>
 {% endblock %}
 
  

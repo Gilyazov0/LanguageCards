@@ -304,15 +304,19 @@ export class Timer extends Widget{
     * @param {HTMLElement} container 
     * @param {Number} initial_time initial number of secons 
     */
-    constructor(owner,initial_time,container = undefined){
+    constructor(owner,initial_time,font_size=undefined,container = undefined){
         super(owner,container)
-        this.initial_time = initial_time;
         this.value = initial_time;
         this._set_state(State.stopped);
         this._start_time = undefined;
         this.interval = undefined;
+        this.font_size = font_size;
+        this._set_initial_time(initial_time)
     }
-
+    _set_initial_time(initial_time){
+        this._initial_time = initial_time;
+        this.width =`${String(this._initial_time).length*1.2}rem` 
+    }
   
     start(){
         this._set_state(State.running, true)
@@ -326,8 +330,8 @@ export class Timer extends Widget{
      */
 
     reset(initial_time = undefined){
-        if (initial_time) this.initial_time = initial_time;
-        this.value = this.initial_time;
+        if (initial_time) this._set_initial_time(initial_time);
+        this.value = this._initial_time;
         this.show()
     }
 
@@ -361,7 +365,7 @@ export class Timer extends Widget{
      */
     _tic(){
         if (this.state.is_in_state(State.running)){
-            this.value = this.initial_time + Math.round((this._start_time - new Date().getTime())/1000);
+            this.value = this._initial_time + Math.round((this._start_time - new Date().getTime())/1000);
             if(this.value <=0){
                 this.value = 0;
                 this.stop();
@@ -370,16 +374,25 @@ export class Timer extends Widget{
         }
     }
 
+    _calculate_font_zise(){
+        const h_font_size = this.container.scrollHeight*2/3;
+        const w_font_size = this.container.scrollWidth/ String(this._initial_time).length*2*0.9;
+        return `${Math.min(h_font_size,w_font_size)}px`;
+    }
+
     /** @override */
     _getHTML() {
         let value = this._state == State.disabled?'--':this.value;
-        return `<div style='width:100px;height: 100%;display:flex;justify-content:center'>
-                    <h3>
-                    <div style='width:4rem;height: 100%;' class="badge badge-primary">
-                        ${value}
+        let font_size = this.font_size; 
+        if (font_size == undefined){
+            font_size = this._calculate_font_zise();
+        }
+
+        return `
+                    <div style='font-size:${font_size}; width:${this.width}' class="timer badge-primary">
+                        <span>${value}</span>
                     </div>
-                    </h3>
-                </div>`
+                `
     }
          
 }

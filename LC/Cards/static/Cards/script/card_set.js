@@ -1,3 +1,10 @@
+/**
+ * @typedef Tag
+ * @type {Object}
+ * @property {string} name
+ * @property {number} id
+ */
+
 $(document).ready(function() { //jQuery библиотека скриптов на JS
     $(document).on('click', '.dropdown-menu', function (e) {
         if (e.target.classList.contains('keep_open')){
@@ -306,10 +313,7 @@ export class Timer extends Widget{
         this.interval = undefined;
     }
 
-   
-   /**
-    * starts Timer
-    */
+  
     start(){
         this._set_state(State.running, true)
         this._start_time = new Date().getTime();
@@ -327,16 +331,23 @@ export class Timer extends Widget{
         this.show()
     }
 
-    /**
-     * stops Timer
-     */
     stop(){
-        clearInterval(this.interval)
         this._set_state(State.stopped,true);
         this.show();
     }
 
-     /** @override */
+    disable(){
+        this._set_state(State.disabled,true);
+        this.show();
+    }
+
+   
+    _set_state(new_state, throw_onChange = false){
+        if (this.state.is_in_state(State.running)) clearInterval(this.interval)
+        super._set_state(new_state, throw_onChange)
+    }
+
+    /** @override */
     save_to_JSON(){
         let result = super.save_to_JSON(objectJSON) 
 
@@ -359,33 +370,54 @@ export class Timer extends Widget{
         }
     }
 
-     /**
-     *  @override 
-     */
-    show(){              
-        if (!super.show()) return false
-        return true    
-    }
-
-     /** @override */
+    /** @override */
     _getHTML() {
-        return `<div style='width:100px;height: 100%;display:flex;justify-content:center'> <h3><div style='width:4rem;height: 100%;' class="badge badge-primary">
-        ${this.value}</div></h3></div>`
+        let value = this._state == State.disabled?'--':this.value;
+        return `<div style='width:100px;height: 100%;display:flex;justify-content:center'>
+                    <h3>
+                    <div style='width:4rem;height: 100%;' class="badge badge-primary">
+                        ${value}
+                    </div>
+                    </h3>
+                </div>`
     }
          
 }
 
-
 export class Tag_selector extends Widget{
 
+     /**
+     * @param {Object} owner
+     * @param {Array.<Tag>} user_tags [{'name':name,'id': id},{}...]
+     * @param {Array.<Tag>} tags [{'name':name,'id': id},{}...]
+     * @param {string} caption 
+     * @param {HTMLElement} container  
+     */
     constructor(owner, user_tags, tags, caption,container=undefined) {
 
         super(owner,container);
-        this.tags = tags;//[{'name':name,'id': id},{}...]
-        this.user_tags = user_tags;//[{'name':name,'id': id},{}...]
+        this.tags = tags;
+        this.user_tags = user_tags;
+
+         /**
+         * [tag.id, tag.id....]
+         * @type {Array.<Number>}
+         * @public
+         */
         this.selected_tags = []; //[tag.id, tag.id....]
-        this.all_tags_dict = {} // {tag.id: {'name':name,'id': id}...} tags.id and user_tags.id do not intersect
+
+         /**
+         * all_tags_dict {tag.id: {'name':name,'id': id}...} tags.id and user_tags.id do not intersect
+         * @type {Array.<Tag>}
+         * @public
+         */
+        this.all_tags_dict = {} 
+
+        /**
+         * @type {Array.<string>}
+         */
         this.caption = caption;
+
         for(let i=0; i < this.tags.length;i++){
             this.tags[i]['type'] ='common';
             this.all_tags_dict[this.tags[i].id] = this.tags[i]
@@ -407,10 +439,13 @@ export class Tag_selector extends Widget{
         return true    
     }
 
+    /**
+     * occurs when user click on tag
+     * @param {Event} e 
+     */
     _form_check_input_onClick(e){
         this._update_selected_tags();
         this._show_selected_tags();
-        //this.show();
     }
 
     _get_tag_by_id(tag_id){
@@ -480,11 +515,11 @@ export class Tag_selector extends Widget{
                 <span class="caret"></span></button>
             <div class="dropdown-menu keep_open">
                 <p class="mb-0  keep_open">Personal tags.</p>
-                <div style="display: flex; justify-content:last baseline; flex-wrap: wrap keep_open">
+                <div class="keep_open" style="display: flex; justify-content:last baseline; flex-wrap: wrap">
                     ${personal_tags_html}
                 </div>
                 <p class="mb-0  keep_open">   Common tags. </p>
-                <div style="display: flex; justify-content:last baseline; flex-wrap: wrap keep_open">
+                <div class="keep_open" style="display: flex; justify-content:last baseline; flex-wrap: wrap">
                     ${common_tags_html}
                 </div>             
             </div>
@@ -495,24 +530,57 @@ export class Tag_selector extends Widget{
 
 
 export class Tag_selector_set extends Widget{
+    
+     /**
+     * @typedef TS_captions sdsdds
+     * captions for tag selectors pair
+     * @type {Object}
+     * @property {string} inculde caption for tag selectors 
+     * @property {string} exclude caption for tag selectors 
+     */
+
 
     /**
      * @constructor
      * @param {Object} owner
      * @param {HTMLElement} container  
-     * @param {Array} user_tags [{'name':name,'id': id},{}...]
-     * @param {Array} tags [{'name':name,'id': id},{}...] 
-     * @param {Array} captions  captions = {'inculde':'caption for includes', 'exclude':'caption for excludes' } 
+     * @param {Array.<Tag>} user_tags [{'name':name,'id': id},{}...]
+     * @param {Array.<Tag>} tags [{'name':name,'id': id},{}...] 
+     * @param {TS_captions} captions  captions = {'inculde':'caption for includes', 'exclude':'caption for excludes' } 
      */
     constructor(owner, user_tags, tags, captions, container=undefined ){
         super(owner,container)
+        
+        /**
+        * @type {Array.<Tag>}
+        * @public
+        */
+
         this.tags = tags;
+        /**
+        * @type {Array.<Tag>}
+        * @public
+        */
         this.user_tags = user_tags;
-        this.tag_selectors = [] //[{'include': Tag_selector, 'exclude': Tag_selector},{same}...]        
+
+        /**
+        * [{'include': Tag_selector, 'exclude': Tag_selector},{same}...]  
+        * @type {Object.<string,Tag_selector>}
+        * @public
+        */
+        this.tag_selectors = []
+
+        /**
+        * @type {TS_captions}
+        * @public
+        */   
         this.captions = captions;
         this.add_tag_selectors_pair()
-    }
+     }
  
+     /**
+     * @returns  {Object.<string,Tag_selector>} {'include': Tag_selector, 'exclude': Tag_selector}
+     */ 
     add_tag_selectors_pair(){
         let ts_pair = {}         
         ts_pair['include'] = new Tag_selector(this,this.user_tags,this.tags,this.captions['include']); 
@@ -528,19 +596,6 @@ export class Tag_selector_set extends Widget{
         this.tag_selectors.push(ts_pair);
         this.show()
         return ts_pair
-    }
-
-    _getHTML(){
-        let tag_selectors_html ='';
-        for (let i=0;i<this.tag_selectors.length;i++){
-            tag_selectors_html+= `<div class="row" >
-                                 <div style = 'display:flex' class=" col flex-column"  id='tag_selector_incl_${i}'></div>
-                                 <div style = 'display:flex' class=" col flex-column" id='tag_selector_excl_${i}'></div>
-                                 </div>`
-            }
-        let result = `${tag_selectors_html} 
-                  <div button class="btn btn-primary" id = 'add-tag-selectors-btn' <h1> add filter </h1></button> </div>`        
-        return result
     }
 
     show(){
@@ -561,7 +616,10 @@ export class Tag_selector_set extends Widget{
         this.container.querySelector('#add-tag-selectors-btn').onclick =this.add_tag_selectors_pair.bind(this);         
     }
  
-    // return [{'include':[tag_id, ..], 'exclude':[tag_id, ...]} ...]
+   
+    /**
+     * @returns  {Object.<string,Array.<number>>} [{'include':[tag_id, ..], 'exclude':[tag_id, ...]} ...]
+     */
     get_selected_tags(){
         let result =[]
         for(let i=0; i< this.tag_selectors.length;i++){
@@ -573,12 +631,17 @@ export class Tag_selector_set extends Widget{
         return result;
     }
 
-    //return settings(internal state) in serializable structure
+    /**
+    * @returns return settings(internal state) in serializable structure
+    */
+
     get_settings(){
         return {'selected_tags':this.get_selected_tags()}
     }
-
-    //inverse of get_settings()
+    /**
+     *restore previously saved state. inverse of get_settings()
+     * @param {*} settings  
+     */
     set_settings(settings){
         this.tag_selectors = []
         const selected_tags = settings['selected_tags'];
@@ -591,6 +654,21 @@ export class Tag_selector_set extends Widget{
             }
         }      
     }
+
+    
+    _getHTML(){
+        let tag_selectors_html ='';
+        for (let i=0;i<this.tag_selectors.length;i++){
+            tag_selectors_html+= `<div class="row" >
+                                 <div style = 'display:flex' class=" col flex-column"  id='tag_selector_incl_${i}'></div>
+                                 <div style = 'display:flex' class=" col flex-column" id='tag_selector_excl_${i}'></div>
+                                 </div>`
+            }
+        let result = `${tag_selectors_html} 
+                  <div button class="btn btn-primary" id = 'add-tag-selectors-btn' <h1> add filter </h1></button> </div>`        
+        return result
+    }
+
 }
 
 //Игровая карта. Хранит данные карты в виде сырых данных JSON
@@ -677,6 +755,15 @@ export class Card extends Widget{
         if (!this.is_front_side) {
             this.show_side(true)
         }
+
+        const card_front =this.container.querySelector(".flip-card-front");
+        const card_back =this.container.querySelector(".flip-card-back");
+        let height = Math.max(card_front.scrollHeight,card_back.scrollHeight)
+        card_back.style.height=height+'px';
+        card_back.style.minHeight = '30vh';
+        card_front.style.height=height+'px';
+        card_front.style.minHeight = '30vh';
+        
 
         const tag_selectors = this.container.querySelectorAll("#card_tag_selector" + this.get_id());
         for (let i = 0; i < tag_selectors.length; i++) {
@@ -822,7 +909,7 @@ export class Card extends Widget{
             result += `
             <div class="card border-success mb-3 game-card ${i == 0 ? "flip-card-front" : "flip-card-back"}">
             <div class="card-header bg-transparent border-success ">${header} ${user_tags_string}</div>
-            <div class="card-body text-success ">
+            <div class="card-body text-success">
             ${body}
             </div>
             <div class="card-footer bg-transparent border-success ">${footer}</div>
@@ -893,3 +980,4 @@ export class Card_set extends Saveable {
  */
 State.get_or_create_state('stopped')
 State.get_or_create_state('running')
+State.get_or_create_state('disabled',State.stopped)

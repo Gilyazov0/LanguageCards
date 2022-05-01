@@ -134,9 +134,9 @@ class Abstract_game extends Widget{
         let result = ''
 
         let FA_selector = `
-            <div> <label><h4>Front side:</h4> </label>
-                <select id ="FA_selector" class="form-select form-select-sm">
-                   `
+                <label class="form-control-lg label-gp">Front side:</label>
+                <select id ="FA_selector" class="form-control-lg form-select-lg input-gp flex-grow-1">
+                `
         for (let i = 0; i < this.FAs.length; i++) {
             FA_selector += `<option value='${this.FAs[i]}'>${this.FAs[i]}</option>`
         }
@@ -146,12 +146,14 @@ class Abstract_game extends Widget{
             <div class="alert alert-primary" id="lable-cards-count" >
                 <h1>Number of cards in game</h1>
             </div>
-            <div>${FA_selector}</div> 
-            <div id='additional_settings'> </div> 
+            <div>
+                <div class="form-group  group-gp"> ${FA_selector}</div> 
+                <div id='additional_settings'> </div>
+            </div>
             <div id ='tag_selectors_container'></div>                           
             <div class="alert alert-primary" style="padding:10px">                                  
                 <div style="text-align: center" >
-                    <button class="btn btn-primary game-control" id = 'start-game-btn'>
+                    <button class="btn btn-primary" id = 'start-game-btn'>
                         <h1> start game </h1>
                     </button> 
                 </div>
@@ -338,14 +340,14 @@ class Print_game extends Simple_game {
         super._show_settings();
 
       let answer_time = ` 
-        <div >
-            <label for="answer_time"><h4>Answer time:</h4></label>
-            <input id='answer_time' type="number" class="" value=${this.answer_time} />           
+        <div class="form-group group-gp">
+            <label class="form-control-lg label-gp" for="answer_time">Answer time:</label>
+            <input id='answer_time' type="number" class="form-control-lg input-gp flex-grow-1" value=${this.answer_time} />           
         </div>`
         
         let answer_type = `
-        <div> <label><h4>Answer type:</h4> </label>
-            <select id ="answer_type" class="form-select form-select-sm">
+        <div class="form-group  group-gp"> <label class="form-control-lg label-gp">Answer type:</label>
+            <select id ="answer_type" class="form-control-lg form-select form-select-lg input-gp flex-grow-1">
                `
         for (let i = 0; i < this.FAs.length; i++) {
             let selected = this.FAs[i] == this.answer_attribute? 'selected="selected"':''
@@ -415,6 +417,9 @@ class Print_game extends Simple_game {
     }
 
     _show_new_card(direction) {  
+        this.timer.disable();
+        let answer = this.container.querySelector("#answer")
+        answer.value = ''
         super._show_new_card(direction);
     }
 
@@ -433,13 +438,12 @@ class Print_game extends Simple_game {
     } 
 
     _update_game_page() {
+        super._update_game_page()
         if (!this._is_answered()){
             this.timer.reset();
             this.timer.start();
-        } 
-        let answer = this.container.querySelector("#answer")
-        answer.value = ''
-        super._update_game_page()
+        } else if (this.timer.state != State.disabled) this.timer.stop();
+        
     }
 }    
 

@@ -38,6 +38,13 @@ body, html
     min-height: 40px;  
 }
 
+.card-body {
+    Display:flex; 
+    justify-content:center; 
+    align-items:center;
+    flex-direction:column;
+}
+
 .card-header{
     display: flex; 
     justify-content:space-between;
@@ -87,4 +94,16 @@ body, html
 
 .tag_common{
     color:blue
+}
+
+.group-gp{
+    display:flex;
+} 
+
+.label-gp{
+    min-width: 10rem;   
+}
+
+.input-gp{
+    min-width:3rem;   
 }

@@ -696,6 +696,7 @@ export class Card extends Widget{
         this.is_front_side = true;
         //this.container.card=this;
         this.CSRF_TOKEN = undefined;
+        this.onReverse = undefined;
     }
     static create_without_card_set(owner, card_data, front, back, user_tags, container = null)
     {
@@ -740,9 +741,11 @@ export class Card extends Widget{
         }
     }
 
-    reverse() {
+    reverse(throw_event = false) {
+        
         this.is_front_side = !this.is_front_side;
         this.show_side(false)
+        if (throw_event) this.onReverse?.()
     }
 
     move(in_out,direction, onAnimationendExternal = undefined) {
@@ -793,7 +796,7 @@ export class Card extends Widget{
         const card_titles = this.container.querySelectorAll('.card-title');
         for(let i=0;i<card_titles.length; i++){
             card_titles[i].card = this //!!! убрать
-            card_titles[i].onclick = function (event) { event.target.card.reverse() };
+            card_titles[i].onclick = function (event) { event.target.card.reverse(true) };
             }
         
         const card_menu = this.container.querySelectorAll(".card_menu");

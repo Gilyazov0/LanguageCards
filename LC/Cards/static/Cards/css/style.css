@@ -98,15 +98,19 @@ body, html
 
 .group-gp{
     display:flex;
+   
 } 
 
 .label-gp{
     min-width: 10rem;   
     padding: 0px;
+    display: flex;
+    align-items: center;
  }
 
 .input-gp{
-    min-width:3rem;   
+    min-width:3rem;  
+    width: auto;
 }
 
 .timer{

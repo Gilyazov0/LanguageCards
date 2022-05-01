@@ -5,7 +5,7 @@ from . import views
 
 app_name = 'Language Cards'
 urlpatterns = [
-     path(route='', view=views.index, name='index'),
+     path(route='', view=views.game, name='game'),
      path(route='game/', view=views.game, name='game'),
      path(route='get_cards', view=views.get_cards, name='get_cards'),
      path(route='get_metadata', view=views.get_metadata, name='get_metadata'),      

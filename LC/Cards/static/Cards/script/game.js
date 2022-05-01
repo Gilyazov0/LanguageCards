@@ -141,7 +141,7 @@ class Abstract_game extends Widget{
             FA_selector += `<option value='${this.FAs[i]}'>${this.FAs[i]}</option>`
         }
         FA_selector += '</select></div>'
-        this.container.style.padding = "5px";
+        //this.container.style.padding = "5px";
         result = ` 
             <div class="alert alert-primary" id="lable-cards-count" >
                 <h1>Number of cards in game</h1>
@@ -502,11 +502,11 @@ class MetaGame extends Widget{
 
     _getHTML() {
 
-        let result = '<div id="game_container"></div>'
+        let result = '<div id="game_container" style="padding:5px"></div>'
         if (this._state == State.game) return result
 
         let game_selector = `
-            <div> 
+            <div style='padding:5px'> 
                 <label class="form-control-lg label-gp">Select game:</label>
                 <select id ="game_selector" class="form-control-lg form-select-lg input-gp flex-grow-1">
                `

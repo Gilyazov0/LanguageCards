@@ -102,7 +102,8 @@ body, html
 
 .label-gp{
     min-width: 10rem;   
-}
+    padding: 0px;
+ }
 
 .input-gp{
     min-width:3rem;   

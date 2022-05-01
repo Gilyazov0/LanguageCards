@@ -490,7 +490,7 @@ export class Tag_selector extends Widget{
 
     _getHTML() {
 
-        let result = "<div class='col' id ='selected_tags'></div>"        
+        let result = "<div class='flex-grow-1' id ='selected_tags'></div>"        
         
         let common_tags_html = ''
         for (let i = 0; i < this.tags.length; i++) {
@@ -508,8 +508,8 @@ export class Tag_selector extends Widget{
                                  ${this.user_tags[i].name}
                                  </label>  </div>`
         }
-           result = `<div><h4>${this.caption}</h4></div>
-            <div class = 'row bg-light border flex-grow-1'>${result}
+           result = `<div><h5>${this.caption}</h5></div>
+            <div class = 'group-gp bg-light border flex-grow-1'>${result}
             <div class="dropdown  flex-grow-0">
             <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown">...
                 <span class="caret"></span></button>
@@ -602,7 +602,7 @@ export class Tag_selector_set extends Widget{
         if (!super.show()) return false
         
         this.container.style.marginBottom ="5px";
-        this.container.className = "container-fluid"
+        //this.container.className = "container-fluid"
 
         for (let i=0;i<this.tag_selectors.length;i++){
             let container = this.container.querySelector('#tag_selector_incl_' + i)

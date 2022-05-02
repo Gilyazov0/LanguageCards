@@ -856,7 +856,7 @@ export class Card extends Widget{
     }
 
     _getHTML() {
-        let result = `<div id="card-holder${this.get_id()}" style ="text-align:center">`;
+        let result = `<div id="card-holder${this.get_id()}" style ="text-align:center" class = "rotate-instantly0">`;
 
         const sides = [true, false]
         for (let i = 0; i < sides.length; i++) {
@@ -902,7 +902,7 @@ export class Card extends Widget{
             //user_tags selector
             let user_tags_selector = `
                 <form style="padding-bottom: 0px; margin: 0px; ">
-                    <select id ="card_tag_selector${this.get_id()}" card_id ="${this.get_id()}" class="form-select form-select-sm" aria-label=".form-select-sm example">
+                    <select id ="card_tag_selector${this.get_id()}" card_id ="${this.get_id()}" class="form-select form-select-sm">
                     <option selected>set tag</option>
                                 `
 
@@ -989,6 +989,10 @@ export class Card_set extends Saveable {
 
     get_card(number, container) {
         return new Card(this.owner, this.cards[this.order[number]], this.front, this.back, this, container)
+    }
+
+    get_card_FA_value(card_id,FA){
+        return this.cards[card_id].FAs[FA]      
     }
 }
 /**

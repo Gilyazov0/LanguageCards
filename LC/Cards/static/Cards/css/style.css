@@ -13,6 +13,7 @@ width:30%;
     margin-left: 2%;
     display: flex;
     justify-content: space-between;
+    margin-bottom: 3px;
 }
 
 /*.tag-selector
@@ -102,7 +103,7 @@ body, html
 } 
 
 .label-gp{
-    min-width: 10rem;   
+    width: 11rem;  
     padding: 0px;
     display: flex;
     align-items: center;
@@ -112,6 +113,9 @@ body, html
     min-width:3rem;  
     width: auto;
 }
+.input-gp-sm{
+    max-width:6rem;
+}
 
 .timer{
     border-radius:15%;
@@ -120,4 +124,15 @@ body, html
     justify-content: center;
     width:100%;
     height:100%;
+}
+.score_badge{
+    border-radius:15%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+    margin-right: 3px;
+    min-width: 2.8rem;
 }

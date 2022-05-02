@@ -26,3 +26,4 @@
 +14 Рефракторинг КАРТЫ
 +15. Коментарии tag-selector и tag-selector-set
 16 Обработать событие остановки таймера если с этого времени уже нажали new_game
+17 избавиться   this.selected_tags так как есть tag_selector_set

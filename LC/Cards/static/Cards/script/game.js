@@ -497,6 +497,7 @@ class Variants_game extends Simple_game {
         this.answer = undefined;
         let captions = {'include':'Add cards with tags:','exclude':'except cards with tags:'};
         this.variants_tag_selector =  new Tag_selector_set(this, this.user_tags, this.tags, captions); 
+        this.answer_variants = undefined;
 
 
     } 
@@ -600,6 +601,10 @@ class Variants_game extends Simple_game {
             //this.answer_variants[id].insert(right_variant_place, right_variant);
             this.answer_variants[id].splice(right_variant_place, 0, right_variant);
         }
+    }
+    start(){
+        this.answer_variants = undefined;
+        super.start()
     }
 
     _update_answer_buttons(){

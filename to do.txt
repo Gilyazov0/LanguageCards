@@ -23,5 +23,6 @@
             method: 'POST',
             body: JSON.stringify({ 'tag_id':tag_id, 'card_id': card.get_id()}),
             headers: { "X-CSRFToken": card.CSRF_TOKEN }
-14 Рефракторинг КАРТЫ
-15. Коментарии tag-selector и tag-selector-set
++14 Рефракторинг КАРТЫ
++15. Коментарии tag-selector и tag-selector-set
+16 Обработать событие остановки таймера если с этого времени уже нажали new_game

@@ -18,7 +18,7 @@ class Abstract_game extends Widget{
         this.back_attributes = undefined;
         this.wrong_answers = 0;
         this.right_answers = 0;
-        this.user_answers = {};//{card_id: Is_right}
+        this.user_answers = {};//{answer_key: Is_right}
         this._set_state(State.settings,false) 
         
     }   
@@ -48,6 +48,7 @@ class Abstract_game extends Widget{
     }
 
     start(){
+        this.user_answers = {}
         this.wrong_answers = 0;
         this.right_answers = 0;
         this._set_state(State.game, true)
@@ -111,10 +112,24 @@ class Abstract_game extends Widget{
     }
 
     _check_answer(){
-
-        if (this._is_answered()) return true
-        return false
+   
     }
+
+    _get_current_answer_key(){
+        return undefined
+    }
+
+    _is_answered(){
+        return (this.user_answers[this._get_current_answer_key()] !==undefined)     
+    }
+
+    _save_answer(is_right){
+        if(is_right) this.right_answers++;
+        else this.wrong_answers++;
+
+        this.user_answers[this._get_current_answer_key()] =is_right;
+    }
+
     _update_selected_settings(){
         
         const FA_selector = this.container?.querySelector('#FA_selector')
@@ -202,10 +217,6 @@ class Abstract_game extends Widget{
     } 
 
     _update_game_page() {        
-    }
-
-    _is_answered(){
-       
     }
 
 
@@ -313,15 +324,8 @@ class Simple_game extends Abstract_game {
         this.active_card_obj.move('out', direction, onAnimationend);
     }
 
-    _is_answered(){
-        return (this.user_answers[this.active_card_obj?.get_id()] !==undefined)     
-    }
-
-    _save_answer(is_right){
-        if(is_right) this.right_answers++;
-        else this.wrong_answers++;
-
-        this.user_answers[this.active_card_obj.get_id()] =is_right;
+    _get_current_answer_key(){
+        return this.active_card_obj?.get_id()
     }
 
     _new_active_card_obj(){
@@ -372,7 +376,7 @@ class Simple_score_game extends Simple_game {
 
     _check_answer(){
 
-        if (super._check_answer()) return
+        if (this._is_answered()) return
 
         this._save_answer(this.answer)
  
@@ -433,10 +437,6 @@ class Print_game extends Simple_game {
         this.display_score = true;
        
     } 
-    start(){
-        this.user_answers = {}
-        super.start()
-    }
 
     _show_settings(){
         super._show_settings();
@@ -476,7 +476,6 @@ class Print_game extends Simple_game {
         this.timer.reset(this.answer_time);
     }
  
-
     _getHTML_print_game_controls(){
         return `<div class="game-control-bar mb-3">
                     <div class="col-auto-1 flex-grow-1 mr-1">
@@ -494,11 +493,10 @@ class Print_game extends Simple_game {
     _timer_change(timer,event){
         if (this.timer.state == State.stopped) this._check_answer()
     }
-
    
     _check_answer(){
 
-        if (super._check_answer()) return
+        if (this._is_answered()) return
 
         let answer = this.container.querySelector("#answer")
         let is_right = false;
@@ -551,7 +549,6 @@ class Print_game extends Simple_game {
         
     }
 }    
-
 
 class MetaGame extends Widget{
     constructor(container) {

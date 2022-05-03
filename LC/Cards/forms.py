@@ -14,16 +14,16 @@ class CardForm(forms.ModelForm):
         self.helper = FormHelper()
         self.helper.form_id = 'id-exampleForm'
         self.helper.form_class = 'blueForms'
-         
+        self.user = None  
          
         fields = {}
         sorted_fields = []
 
-        user =''
+       
         if kwargs.get('user'):
-            user = kwargs.pop('user')
+            self.user = kwargs.pop('user')
             fields ['common_tags'] = forms.ModelMultipleChoiceField(queryset= Tag.objects.filter(user =None))
-            fields ['user_tags'] = forms.ModelMultipleChoiceField(queryset= Tag.objects.filter(user =user),required=False)
+            fields ['user_tags'] = forms.ModelMultipleChoiceField(queryset= Tag.objects.filter(user =self.user),required=False)
         else:
             raise ArgumentError('key argument user is required')
 
@@ -48,7 +48,7 @@ class CardForm(forms.ModelForm):
                
             
             initial['common_tags'] = [t.pk for t in card.tags.filter(user = None)]
-            initial['user_tags'] = [t.pk for t in card.tags.filter(user = user)]
+            initial['user_tags'] = [t.pk for t in card.tags.filter(user = self.user)]
   
         forms.ModelForm.__init__(self, *args, **kwargs)
 
@@ -66,7 +66,6 @@ class CardForm(forms.ModelForm):
             for fa in face_attributes:
                 field_name = 'fa_' + str(fa.id)  
                 a = FA_value.objects.filter(FA = fa, card = instance)   
-                #fa_value_instance = FA_value.objects.get_or_create(FA__id = fa.id, card = instance)           
                 if a:
                     
                     fa_value_instance = a[0]
@@ -78,17 +77,18 @@ class CardForm(forms.ModelForm):
 
                 fa_values.append(fa_value_instance)
           
-            # Prepare a 'save_m2m' method for the form,
             old_save_m2m = self.save_m2m
             def save_m2m():
                 old_save_m2m()
-            # This is where we actually link the pizza with toppings
-                instance.tags.clear()
+                tags_to_remove = instance.tags.filter(user = None)
+                if not self.user:
+                    tags_to_remove = tags_to_remove.union(instance.tags.filter(user = self.user))
+                             
+                instance.tags.remove(*tags_to_remove)
                 instance.tags.add(*self.cleaned_data['common_tags'])
                 instance.tags.add(*self.cleaned_data['user_tags'])
             self.save_m2m = save_m2m
 
-            # Do we need to save all changes now?
             if commit:
                 instance.save()
                 self.save_m2m()

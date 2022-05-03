@@ -1,7 +1,10 @@
 from django.db import models
 from django.utils.timezone import now
-from django.contrib.auth.models import User
+from django.contrib.auth.models import AbstractUser;
 from django.contrib import admin
+
+class User(AbstractUser):
+    pass
 
 class UserProfile(models.Model):
     @staticmethod

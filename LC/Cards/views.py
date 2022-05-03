@@ -1,9 +1,9 @@
+from cProfile import Profile
 from django.urls import reverse
 from xmlrpc.client import ResponseError
 from django.shortcuts import get_object_or_404, render
 from django.http import HttpResponseRedirect, JsonResponse, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
-from matplotlib.style import context
 
 from .models import Card, Tag, FA_value, Face_attribute
 from random import shuffle
@@ -21,6 +21,7 @@ def login_request(request):
         username = request.POST['username']
         password = request.POST['psw']
         user = authenticate(username=username, password=password)
+        UserProfile.get_or_create_default_profile(user)
         if user is not None:
             login(request, user)
             return redirect('Cards:index')
@@ -55,6 +56,7 @@ def registration_request(request):
         if not user_exist:
             user = User.objects.create_user(username=username, first_name=first_name, last_name=last_name,
                                             password=password)
+            UserProfile.get_or_create_default_profile(user)
             login(request, user)
             return redirect("Cards:index")
         else:
@@ -62,8 +64,9 @@ def registration_request(request):
             return render(request, 'Cards/registration.html', context)
 
 
+#Create user tag (not Card user tag!)
 def create_tag(request):
-    if request.method == "POST":
+    if request.method == "POST" and request.user.is_authenticated:
         user_tag_name = request.POST['user_tag']
         tag = Tag()
         tag.user = request.user
@@ -74,15 +77,17 @@ def create_tag(request):
             pass    
         return HttpResponseRedirect(reverse('Cards:profile'))
 
-
+#Delete user tag (not Card user tag!)
 def delete_tag(request):
-    if request.method == "POST":
+    if request.method == "POST" and request.user.is_authenticated:
         tag_id = int(request.POST['tag_id'])
         tag = get_object_or_404(Tag, pk=tag_id)
-        tag.delete()
+        if tag.user == request.user or is_advanced_user(request.user): 
+            tag.delete()
         return HttpResponseRedirect(reverse('Cards:profile'))
 
 
+#user profile (not Card profile)
 def profile(request):
     if not request.user.is_authenticated:
         return ResponseError('User is not authenticated')
@@ -197,9 +202,10 @@ def set_card_tag(request):
         card_id = int(data['card_id'])
         card = get_object_or_404(Card,pk = card_id)
         tag = get_object_or_404(Tag,pk = tag_id)
-        if not card.tags.filter(id = tag_id):
-            card.tags.add(tag)            
-            card.save()
+        if request.user == tag.user:
+            if not card.tags.filter(id = tag_id):
+                card.tags.add(tag)            
+                card.save()
             
     return JsonResponse(card.serialize(request.user), safe=False)
 
@@ -211,16 +217,19 @@ def delete_card_tag(request):
         card_id = int(data['card_id'])
         card = get_object_or_404(Card,pk = card_id)
         tag = get_object_or_404(Tag,pk = tag_id)
-        if card.tags.filter(id = tag_id):
-            card.tags.remove(tag)
-            card.save()
+        if request.user == tag.user:
+            if card.tags.filter(id = tag_id):
+                card.tags.remove(tag)
+                card.save()
     return JsonResponse(card.serialize(request.user), safe=False)
 
+def is_advanced_user(user):
+    return user.is_authenticated and user.profile.is_advanced_user
 
 def card_profile(request, card_id):
     message =''
     card = get_object_or_404(Card,pk = card_id)
-    if request.method == "POST":
+    if request.method == "POST" and is_advanced_user(request.user):
         if request.POST['action'] == 'Save':
             form = CardForm(request.POST, user = request.user,instance=card)
             if form.is_valid():
@@ -244,7 +253,7 @@ def new_card(request):
     card_data = ''
     context = {}
     is_card_created = False
-    if request.method == "POST":        
+    if request.method == "POST" and is_advanced_user(request.user):        
         form = CardForm(request.POST, user = request.user)
         if form.is_valid():
             card = form.save()

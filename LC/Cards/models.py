@@ -1,14 +1,29 @@
 from django.db import models
 from django.utils.timezone import now
 from django.contrib.auth.models import User
+from django.contrib import admin
 
+class UserProfile(models.Model):
+    @staticmethod
+    def get_or_create_default_profile(user):
+        if hasattr(user,'profile'):
+            return user.profile   
+        new_pofile = UserProfile.objects.create(user = user)
+        new_pofile.save()
+        return new_pofile
 
+    user = models.OneToOneField(
+        User, blank=False,null=False, on_delete=models.CASCADE, related_name='profile')
+    is_advanced_user = models.BooleanField(null=False, default=False, blank=True)
+
+    def __str__(self):
+         return f"id: {self.id} user {self.user} advanced {self.is_advanced_user}"
 
 class Tag (models.Model):
     name = models.CharField(null=False, max_length=20, unique=False)
     user = models.ForeignKey(
         User, blank=True,null=True, on_delete=models.CASCADE, related_name='user_tags')
-
+    
     def serialize(self):
         return {"name": self.name,"id":self.id}
 
@@ -19,7 +34,6 @@ class Tag (models.Model):
     
     class Meta:
         unique_together = (('name', 'user'),)
-
 
 class Card(models.Model):
     tags = models.ManyToManyField(Tag, related_name='cards')

@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Card, Tag, Face_attribute, FA_value
+from .models import Card, Tag, Face_attribute, FA_value, UserProfile
 
 # Register your models here.
 
@@ -19,3 +19,4 @@ admin.site.register(Card,CardAdmin)
 admin.site.register(Tag,StringModelAdmin)
 admin.site.register(Face_attribute,StringModelAdmin)
 admin.site.register(FA_value,StringModelAdmin)
+admin.site.register(UserProfile,StringModelAdmin)

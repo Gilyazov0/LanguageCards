@@ -16,6 +16,8 @@ class CardForm(forms.ModelForm):
         self.helper.form_class = 'blueForms'
         self.user = None  
          
+        self.edit="false"
+   
         fields = {}
         sorted_fields = []
 

@@ -1,0 +1,17 @@
+[Unit]
+Description=gunicorn daemon
+Requires=gunicorn.socket
+After=network.target
+
+[Service]
+User=django_user
+Group=www-data
+WorkingDirectory=/home/django_user/Cards
+ExecStart=/home/django_user/Cards/Cards_env/bin/gunicorn \
+          --access-logfile - \
+          --workers 3 \
+          --bind unix:/run/gunicorn.sock \
+          LC.wsgi:application
+
+[Install]
+WantedBy=multi-user.target

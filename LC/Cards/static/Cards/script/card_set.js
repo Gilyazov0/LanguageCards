@@ -541,7 +541,6 @@ export class Tag_selector extends Widget{
     }
 }
 
-
 export class Tag_selector_set extends Widget{
     
      /**
@@ -628,8 +627,7 @@ export class Tag_selector_set extends Widget{
 
         this.container.querySelector('#add-tag-selectors-btn').onclick =this.add_tag_selectors_pair.bind(this);         
     }
- 
-   
+    
     /**
      * @returns  {Object.<string,Array.<number>>} [{'include':[tag_id, ..], 'exclude':[tag_id, ...]} ...]
      */
@@ -667,14 +665,13 @@ export class Tag_selector_set extends Widget{
             }
         }      
     }
-
     
     _getHTML(){
         let tag_selectors_html ='';
         for (let i=0;i<this.tag_selectors.length;i++){
-            tag_selectors_html+= `<div class="row" >
-                                 <div style = 'display:flex' class=" col flex-column"  id='tag_selector_incl_${i}'></div>
-                                 <div style = 'display:flex' class=" col flex-column" id='tag_selector_excl_${i}'></div>
+            tag_selectors_html+= `<div class="group-gp" >
+                                    <div style = 'display:flex' class="flex-column flex-grow-1"  id='tag_selector_incl_${i}'></div>
+                                    <div style = 'display:flex' class="flex-column flex-grow-1" id='tag_selector_excl_${i}'></div>
                                  </div>`
             }
         let result = `${tag_selectors_html} 

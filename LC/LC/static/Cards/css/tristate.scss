@@ -1,0 +1,283 @@
+$cl-primary: #009688;
+$cl-state-null: #bdbdbd;
+$cl-state-null-light: #fafafa;
+$cl-state-null-dark: #8b8b8b;
+$cl-state-on: #a5d7a7;
+$cl-state-on-dark: #4caf50;
+$cl-state-off: #f9a19a;
+$cl-state-off-dark: #f44336;
+
+.tristate {
+  position: relative;
+  display: inline-block;
+  
+  & > input[type="radio"] {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 18px;
+    height: 18px;
+    margin: 0;
+    padding: 0;
+    opacity: 0;
+    
+    & + i {
+      position: relative;
+      display: inline-block;
+      width: 18px;
+      height: 18px;
+      vertical-align: top;
+      
+      &, &:before, &:after {
+        transition: all 0.3s;
+      }
+    }
+    
+    &:first-child {
+      z-index: 10;
+      
+      &:checked {
+        z-index: 0;
+      }
+    }
+    
+    &:checked {
+      & + input[type="radio"] {
+        z-index: 10;
+      }
+      
+      & + i { 
+        & + label, & + label + label {
+          display: none;
+        }
+      }
+      
+      & + input[type="radio"] {
+        & + i {
+          //background-color: #0f0;
+          
+          & + label, & + label + label + label {
+            display: none;
+          }
+        }
+        
+        & + input[type="radio"] {
+          & + i {
+            // background-color: #00f;
+            
+            & + label + label, & + label + label + label {
+              display: none;
+            }
+          }
+        }
+      }
+    }
+  }
+  
+  &-checkbox {
+    & > input[type="radio"] {
+      
+      & + i {
+        border: solid 2px $cl-state-null;
+        border-radius: 3px;
+        
+        &:before {
+          content: ' ';
+          display: block;
+          position: absolute;
+          left: -2px;
+          top: -2px;
+          right: -2px;
+          bottom: -2px;
+          background-color: $cl-state-null-dark;
+          border-radius: 3px;
+        }
+        
+        &:after {
+          content: ' ';
+          display: block;
+          position: absolute;
+          left: 4px;
+          top: 7px;
+          color: white;
+          border-bottom: solid 3px;
+          opacity: 0;
+        }
+      }
+
+      &:checked {
+        & + i {
+          background-color: $cl-primary;
+          
+          &:before {
+            background-color: $cl-primary
+          }
+          
+          &:after {
+            left: 1px;
+            top: 3px;
+            width: 14px;
+            height: 5px;
+            border-left: solid 3px;
+            border-bottom: solid 3px;
+            transform: rotate(-45deg);
+            opacity: 1;
+          }
+        }
+
+        & + input[type="radio"] {
+          & + i {
+            &:after {
+              width: 10px;
+              height: 0px;
+              border-left: none;
+              border-bottom: solid 3px;
+              transform: rotate(0);
+              opacity: 1;
+            }
+          }
+
+          & + input[type="radio"] {
+            & + i {
+              &:before {
+                opacity: 0;
+                transform: scale(0);
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  
+  &-switcher {
+    & > input[type="radio"] {
+      width: 46px;
+      height: 24px;
+      left: -3px;
+      top: -1px;
+
+      & + i {
+        width: 40px;
+        height: 16px;
+        margin-top: 2px;
+        background-color: $cl-state-null;
+        border-radius: 8px;
+        
+        &:before {
+          content: ' ';
+          position: absolute;
+          top: -3px;
+          left: -3px;
+          display: block;
+          width: 24px;
+          height: 24px;
+          background-color: $cl-state-null-light;
+          border-radius: 50%;
+          box-shadow: 0 1px 8px 1px rgba(0, 0, 0, 0.3);
+        }
+      }
+    
+      &:checked {
+        & + i {
+          background-color: $cl-state-on;
+          
+          &:before {
+            left: 19px;
+            background-color: $cl-state-on-dark;
+          }
+        }
+      
+        & + input[type="radio"] {
+          & + i {
+            &:before {
+              left: 8px;
+            }
+          }
+          
+          & + input[type="radio"] {
+            & + i {
+              background-color: $cl-state-off;
+          
+              &:before {
+                background-color: $cl-state-off-dark;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  
+  &-rotate {
+    label {
+      display: inline-block;
+      padding-top: 3px;
+      padding-left: 3px;
+    }
+    
+    & > input[type="radio"] {
+      width: 30px;
+      height: 30px;
+      
+      & + i {
+        width: 24px;
+        height: 24px;
+        margin: 5px;
+        background-color: #ccc;
+        border-radius: 50%;
+        box-shadow: 3px 3px 5px rgba(0,0,0,0.3), inset 1px 1px 2px rgba(255, 255, 255, 0.4), inset -1px -1px 2px rgba(0, 0, 0, 0.4);
+        
+        &:before {
+          content: ' ';
+          display: block;
+          position: absolute;
+          left: 50%;
+          top: 50%;
+          width: 3px;
+          height: 3px;
+          margin-left: -1px;
+          margin-top: -1px;
+          border-radius: 50%;
+          box-shadow: -16px 0 0 $cl-state-null-dark, 0 -16px 0 $cl-state-null-dark, 16px 0 0 $cl-state-null-dark;
+        }
+        
+        &:after {
+          content: ' ';
+          display: block;
+          position: absolute;
+          left: 0;
+          top: 50%;
+          width: 10px;
+          margin-top: -1px;
+          border-bottom: solid 2px #666;
+          transform-origin: 12px 50%;
+        }
+      }
+
+      &:checked {
+        & + i {
+          &:after {
+            transform: rotate(180deg);
+          }
+        }
+
+        & + input[type="radio"] {
+          & + i {
+            &:after {
+              transform: rotate(90deg);
+            }
+          }
+
+          & + input[type="radio"] {
+            & + i {
+              &:after {
+                transform: rotate(0deg);
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

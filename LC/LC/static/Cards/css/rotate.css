@@ -1,0 +1,128 @@
+.rotate0{
+    transform: rotateY(0deg);
+    transition: transform 0.8s;
+    transform-style: preserve-3d;
+    perspective: 1000px;
+   
+}
+
+.rotate180{
+    transform: rotateY(180deg);
+    transition: transform 0.8s;
+    transform-style: preserve-3d;
+    perspective: 1000px;
+    
+}
+
+.rotate-instantly0{
+  transform: rotateY(0deg); 
+  transform-style: preserve-3d;
+  perspective: 1000px;
+}
+
+.rotate-instantly180{
+  transform: rotateY(180deg);  
+  transform-style: preserve-3d;
+  perspective: 1000px;
+}
+
+.flip-card-back {   
+  -webkit-backface-visibility: hidden; /* Safari */
+  backface-visibility: hidden;
+}
+.flip-card-front {
+  position: absolute;
+  -webkit-backface-visibility: hidden; /* Safari */
+  backface-visibility: hidden;
+}
+
+.flip-card-back {  
+  transform: rotateY(180deg);
+}
+
+.move_out_to-right {
+    animation-name: move_out_to-right;
+    animation-duration: 1s;
+
+}
+@keyframes move_out_to-right {
+    from {
+      transform: translateX(0%);     
+    }  
+    to {
+        transform: translateX(100%);
+       }
+  }
+
+.move_out_to-left {     
+    animation-name: move_out_to-left;
+    animation-duration: 1s;
+}
+
+@keyframes move_out_to-left {
+    from {
+      transform: translateX(0%);      
+    } 
+    to {
+        transform: translateX(-100%);
+       }
+  }
+
+.move_in_from-right {
+    animation-name: move_in_from-right;
+    animation-duration: 1s;
+}
+@keyframes move_in_from-right {
+    from {
+      transform: translateX(-100%);
+    } 
+    to {
+        transform: translateX(0%);
+       }
+  }
+
+.move_in_from-left {
+  animation-name: move_in_from-left;
+  animation-duration: 1s;
+}
+
+@keyframes move_in_from-left {
+    from {
+      transform: translateX(+100%);     
+    }
+  
+    to {
+        transform: translateX(0%);
+       }
+  }
+
+  @keyframes disappear{
+    0%{
+      opacity: 1;
+      transform: rotateX(90deg);
+      max-height: 0px;
+    }
+
+    30%{
+      opacity: 1;
+      transform: rotateX(0deg);
+      max-height: 100px;
+    }
+    70%{
+      opacity: 1;
+      transform: rotateX(0deg);
+      max-height: 100px;
+    }
+    100%{
+      display: none;
+      opacity: 0;
+      transform: rotateX(90deg);
+      max-height: 0px;
+    }
+  }
+  
+  .disappear{
+      animation-name: disappear;
+      animation-duration: 3000ms;
+      animation-fill-mode: forwards;
+  }

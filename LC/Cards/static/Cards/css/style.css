@@ -16,13 +16,6 @@ width:30%;
     margin-bottom: 3px;
 }
 
-/*.tag-selector
-{
-    width: 90%;
-    display: flex;
-    justify-content: space-between;
-}*/
-
 body, html
 {
     width: 100%;
@@ -73,21 +66,28 @@ body, html
     flex: auto ;
 }
  
-.form-check {
-    width: 6rem;  
-  overflow-x:hidden;
+
+
+
+
+.dropdown {
+    position:static !important;
 }
 
 .dropdown-menu {
-    padding-left: 10px;
-    padding-right: 10px;
-    margin-left: 10px !important;
-    margin-right: 10px !important;
-    width:98vw;
-    position:absolute;
-    transform:translateX(-99%); 
-      
+    box-shadow:none;
+    --margin-top:0px !important;
+    left:0;
+    top:0;
+    padding: 10px;
+    margin-left: 15px;
+    margin-right: 5px;
+    margin-bottom: 15px;
+    margin-top: 5px;
+    width:calc(100% - 20px) !important;
+    --height:calc(100% - 20px)!important;
 }
+
 
 .tag_user{
     color:red;
@@ -106,7 +106,7 @@ body, html
     width: 11rem;  
     padding: 0px;
     display: flex;
-    align-items: center;
+    --align-items: center;
  }
 
 .input-gp{
@@ -136,3 +136,18 @@ body, html
     margin-right: 3px;
     min-width: 2.8rem;
 }
+
+.tag-selector {
+    width: 12rem;  
+    overflow-x:hidden;
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    padding: 0px;
+     --transform:scale(1.5);
+  }
+
+ .tag-selector-checkbox {
+     width: calc(1.5em + 0.75rem + 2px);
+     margin-right: 3px;
+ }

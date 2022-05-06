@@ -448,7 +448,7 @@ export class Tag_selector extends Widget{
         
         this._update_selected_tags_dom()       
         this._show_selected_tags()       
-        $(this.container).on('click', '.form-check-input', this._form_check_input_onClick.bind(this)); 
+        $(this.container).on('click', '.tag-selector', this._form_check_input_onClick.bind(this)); 
         return true    
     }
 
@@ -467,7 +467,7 @@ export class Tag_selector extends Widget{
     }
 
     _update_selected_tags_dom(){
-        const tag_selectors = this.container.querySelectorAll(".tag_selector");        
+        const tag_selectors = this.container.querySelectorAll(".tag-selector-checkbox");        
         for (let i = 0; i < tag_selectors.length; i++) {
             let id = Number(tag_selectors[i].getAttribute('tag_id_data'))             
             tag_selectors[i].checked=this.selected_tags.includes(id)            
@@ -475,7 +475,7 @@ export class Tag_selector extends Widget{
     }
 
     _update_selected_tags() {
-        const tag_selectors = this.container.querySelectorAll(".tag_selector");
+        const tag_selectors = this.container.querySelectorAll(".tag-selector-checkbox");
         this.selected_tags = []
         for (let i = 0; i < tag_selectors.length; i++) {
             if (tag_selectors[i].checked) {
@@ -507,17 +507,17 @@ export class Tag_selector extends Widget{
         
         let common_tags_html = ''
         for (let i = 0; i < this.tags.length; i++) {
-            common_tags_html += `<div class="form-check keep_open">
-                                     <input type="checkbox" class="form-check-input tag_selector keep_open" tag_id_data ='${this.tags[i].id}' id="dropdownCheck${this.tags[i].id}">
-                                     <label class="form-check-label keep_open" for="dropdownCheck${this.tags[i].id}">
+            common_tags_html += `<div class="tag-selector keep_open">
+                                     <input type="checkbox" class="form-control tag-selector-checkbox keep_open" tag_id_data ='${this.tags[i].id}' id="dropdownCheck${this.tags[i].id}">
+                                     <label class="flex-grow-1 form-control-lg label-gp keep_open" for="dropdownCheck${this.tags[i].id}">
                                      ${this.tags[i].name}
                                  </label> </div>`
         }
         let personal_tags_html = ''
         for (let i = 0; i < this.user_tags.length; i++) {
-            personal_tags_html += `<div class="form-check keep_open">
-                                 <input type="checkbox" class="form-check-input tag_selector keep_open" tag_id_data ='${this.user_tags[i].id}' id="dropdownCheck${this.user_tags[i].id}">
-                                 <label class="form-check-label keep_open" for="dropdownCheck${this.user_tags[i].id}">
+            personal_tags_html += `<div class="tag-selector keep_open">
+                                 <input type="checkbox" class="form-control tag-selector-checkbox keep_open" tag_id_data ='${this.user_tags[i].id}' id="dropdownCheck${this.user_tags[i].id}">
+                                 <label class="form-control-lg label-gp keep_open" for="dropdownCheck${this.user_tags[i].id}">
                                  ${this.user_tags[i].name}
                                  </label>  </div>`
         }
@@ -526,15 +526,18 @@ export class Tag_selector extends Widget{
             <div class="dropdown  flex-grow-0">
             <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown">...
                 <span class="caret"></span></button>
-            <div class="dropdown-menu keep_open">
-                <p class="mb-0  keep_open">Personal tags.</p>
-                <div class="keep_open" style="display: flex; justify-content:last baseline; flex-wrap: wrap">
+            <div class="dropdown-menu rounded keep_open ">
+                <h4 class="mb-0  keep_open">Personal tags:</h4>
+                <div class="border border-primary rounded mb-2 keep_open" style="display: flex; justify-content:last baseline; flex-wrap: wrap;padding:10px">
                     ${personal_tags_html}
                 </div>
-                <p class="mb-0  keep_open">   Common tags. </p>
-                <div class="keep_open" style="display: flex; justify-content:last baseline; flex-wrap: wrap">
+                <h4 class="mb-0  keep_open">   Common tags: </h4>
+                <div class="border border-primary rounded mb-2 keep_open" style="display: flex; justify-content:last baseline; flex-wrap: wrap ;padding:10px">
                     ${common_tags_html}
-                </div>             
+                </div> 
+                <div  class="bg-white border border-primary rounded" style="padding:10px;position:sticky; bottom: 0px;">  
+                <button class="btn btn-primary btn-block"> OK </button> 
+                </div>           
             </div>
         </div></div>`     
         return result
@@ -670,8 +673,8 @@ export class Tag_selector_set extends Widget{
         let tag_selectors_html ='';
         for (let i=0;i<this.tag_selectors.length;i++){
             tag_selectors_html+= `<div class="group-gp" >
-                                    <div style = 'display:flex' class="flex-column flex-grow-1"  id='tag_selector_incl_${i}'></div>
-                                    <div style = 'display:flex' class="flex-column flex-grow-1" id='tag_selector_excl_${i}'></div>
+                                    <div style = 'display:flex;max-width:50%' class="flex-column flex-grow-1"  id='tag_selector_incl_${i}'></div>
+                                    <div style = 'display:flex;max-width:50%' class="flex-column flex-grow-1" id='tag_selector_excl_${i}'></div>
                                  </div>`
             }
         let result = `${tag_selectors_html} 

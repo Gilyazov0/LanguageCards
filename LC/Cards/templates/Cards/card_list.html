@@ -1,0 +1,41 @@
+{% extends 'Cards/layout.html' %}
+{% load static %}
+{% block script %}     
+{% if cards_count %}
+<script type="module" src="{% static 'Cards/script/card_set.js' %}"></script>
+
+<script type="module">    
+    import {Card, Card_set} from "{% static 'Cards/script/card_set.js' %}";
+  
+    document.addEventListener('DOMContentLoaded', function () {
+        const element = document.querySelector('#data');         
+
+        let obj = JSON.parse(element.getAttribute('card_set_data'))
+        let FAs = JSON.parse(element.getAttribute('FA_data'))
+        let defaultFA = '{{defaultFA}}'
+        if (defaultFA == '') defaultFA = FAs[0]
+        const index = FAs.indexOf(defaultFA);
+        if (index>-1) FAs.splice(index, 1)
+       
+        const owner = undefined;
+        let card_set= new Card_set(owner, obj.cards, obj.tags, [defaultFA], FAs);
+
+        for (let i=0; i < card_set.cards_count();i++){
+            const container = document.querySelector(`#card_container${i}`);
+            const card =  card_set.get_card(i, container)
+            card.show()
+        } 
+     })
+</script>
+{% endif %}
+{% endblock %}
+
+{% block title %} Search {% endblock %}
+{% block content %}
+
+<div id = 'data' FA_data = '{{FA_data}}'  card_set_data = '{{card_set_data}}'cards_count = '{{cards_count}}' ></div>
+{% for i in cards_count %}
+<div class="card"><div id = 'card_container{{i}}'></div></div>
+
+{% endfor %} 
+{% endblock %}

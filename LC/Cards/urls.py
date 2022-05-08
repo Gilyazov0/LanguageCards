@@ -22,4 +22,5 @@ urlpatterns = [
      path('new_card/', views.new_card, name='new_card'), 
      path('test/', views.test, name='test'), 
      path('search/', views.search, name='search'), 
+     path('card_list/', views.card_list, name='card_list'), 
  ]  + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT) 

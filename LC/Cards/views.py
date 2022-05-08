@@ -313,3 +313,20 @@ def search(request):
         }
          
         return render(request, 'Cards/search.html', context)
+
+def card_list(request):
+
+    cards_ids =  [int(id) for id in request.GET.getlist('id')] 
+    cards = Card.objects.filter(id__in = cards_ids)
+    data = json.dumps(get_card_set_data(cards, request.user))
+    FA_data = [x.serialize() for x in Face_attribute.objects.all()]
+
+    context ={
+            'card_set_data':data,
+            'cards_count':range(len(cards)),
+            'defaultFA': request.GET['FA'],
+            'FA_data': json.dumps(FA_data)
+        }
+         
+    
+    return render(request, 'Cards/card_list.html',context )

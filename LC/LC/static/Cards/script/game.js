@@ -334,7 +334,9 @@ class Simple_game extends Abstract_game {
             <div class = ""><div id = "timer_container" class="col-auto-1"> </div></div>
         </div>
         <div id = "current_card"></div>
-        <div id ="game_results"></div>
+        <div id ="game_results_controls" class = "game-control-bar"> <a id ="get_result_cards" target="_blank" href="-">constant link to this cards</a> </div>
+        <div id ="game_results">
+        </div>
         <div id ="game_controls">
             <div id = "aditional_controls"> </div>
             <div id = "simple_game_controls" class = "game-control-bar">    
@@ -384,7 +386,7 @@ class Simple_game extends Abstract_game {
     //show game results or game itself 
     _show_game_or_results(){
         let game_elements = ['current_card','game_controls'];
-        let result_elements = ['game_results'];
+        let result_elements = ['game_results','game_results_controls'];
         let game_elements_state = 'block'
         let result_elements_state = 'none'
         
@@ -408,6 +410,7 @@ class Simple_game extends Abstract_game {
 
             let container = this.container.querySelector("#game_results")
             container.innerHTML ='';
+            let CardIDS=''
             for (let i=0;i<this.card_set.cards_count();i++){
                 
                 let card_container = document.createElement("div")
@@ -419,8 +422,12 @@ class Simple_game extends Abstract_game {
                    {
                         container.appendChild(card_container)
                         card.show();
+                        CardIDS = CardIDS+'&id='+card.get_id()
                    }
             }
+            const url = `/Cards/card_list/?FA=${this.front_attribute}${CardIDS}`
+            this.container.querySelector("#get_result_cards").setAttribute("href", url);
+
         }
         
      }

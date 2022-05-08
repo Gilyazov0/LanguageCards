@@ -161,6 +161,15 @@ def get_cards(request):
 
     return JsonResponse(result, safe=False)
 
+@csrf_exempt
+def get_cards_count(request):
+    data = json.loads(request.body) #{tag_filter:[{'include':[tag_id, ..], 'exclude':[tag_id, ...]} ...]}
+    cards = filter_cards(data)   
+        
+    result = {'cards_count':cards.count()}  
+   
+    return JsonResponse(result, safe=False)
+
 def get_card_set_data(cards, user):
     
     cards_dict = {}

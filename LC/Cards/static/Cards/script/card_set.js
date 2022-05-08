@@ -5,7 +5,16 @@
  * @property {number} id
  */
 
-$(document).ready(function() { //jQuery библиотека скриптов на JS
+/**
+ *@typedef Card_data
+ *@type {Object}
+ *@property {Number} id 
+ *@property {Object.<string,string>} FAs {FA_Name:FA_Value}
+ *@property {Array.<Tag>} tags 
+ *@property {Array.<Tag>} user_tags
+ */
+
+$(document).ready(function() { 
     $(document).on('click', '.dropdown-menu', function (e) {
         if (e.target.classList.contains('keep_open')){
             e.stopPropagation();          
@@ -17,7 +26,7 @@ function OpenUrlInNewWindow(event){
     const element = event.target;
     const url = element.getAttribute("URL");
     window.open(url, '_blank').focus();
-   }
+}
 
 
 export class Settings{
@@ -41,7 +50,6 @@ export class Settings{
 /** used to specify internal state of objects 
  * @class
  */
-
 export class State {
 
     static default = new State('default')
@@ -75,14 +83,16 @@ export class State {
      * @returns {Boolean} True if this = state or specify state
      */
     is_in_state(state){
-        return this == state || this.specify_state?.is_in_state(state)
+        if (this == state) return true
+        if (this.specified_state == undefined) return false
+        return this.specified_state.is_in_state(state)
     }
 }
  
 /** just able to save internal state into JSON and load it back
  * @class
  */
- export class Saveable{
+export class Saveable{
 
     constructor(){
     }
@@ -389,7 +399,7 @@ export class Timer extends Widget{
         }
 
         return `
-                    <div style='font-size:${font_size}; width:${this.width}' class="timer badge-primary">
+                    <div style='font-size:${font_size}; width:${this.width}' class="timer badge-primary border-primary border border-lg">
                         <span>${value}</span>
                     </div>
                 `
@@ -686,18 +696,38 @@ export class Tag_selector_set extends Widget{
 
 //Игровая карта. Хранит данные карты в виде сырых данных JSON
 export class Card extends Widget{
+    
+    /**
+    * @constructor
+    * @param {Object} owner
+    * @param {Card_data} card_data data of this card returned by DJANGO API 
+    * @param {Array.<string>} front front attributes of this card
+    * @param {Array.<string>} back back attributes of this card
+    * @param {Card_set} card_set 
+    * @param {HTMLElement} container  
+    * @returns {Card}
+    */
     constructor(owner, card_data, front, back, card_set, container = null) {
         super(owner,container);
         this.card_data = card_data;
         this.front = front; //[front face attr]
         this.back = back; //[back face attr]
-        //this.show_tags = show_tags;
         this.card_set = card_set;
         this.is_front_side = true;
-        //this.container.card=this;
         this.CSRF_TOKEN = undefined;
         this.onReverse = undefined;
     }
+
+    /**
+    * @constructor
+    * @param {Object} owner
+    * @param {Card_data} card_data data of this card returned by DJANGO API 
+    * @param {Array.<string>} front front attributes of this card
+    * @param {Array.<string>} back back attributes of this card
+    * @param {Array.<Tag>} user_tags all user tags avaiable 
+    * @param {HTMLElement} container  
+    * @returns {Card}
+    */
     static create_without_card_set(owner, card_data, front, back, user_tags, container = null)
     {
         let result = new Card(owner, card_data, front, back, undefined, container);
@@ -706,7 +736,14 @@ export class Card extends Widget{
         return result; 
     }
 
-    //creates card from string json data provided by API
+    /**
+    *creates card from string json data provided by API
+    * @param {Object} owner 
+    * @param {string} card_data_JSON {Card_data} serilized to JSON string
+    * @param {string} tags_data_JSON {Array.Tag} serilized to JSON string
+    * @param {HTMLElement} container 
+    * @returns {Card}
+    */
     static create_from_JSON_strings(owner, card_data_JSON, tags_data_JSON, container){
         const card_data_ = JSON.parse(card_data_JSON);
         const tags_data_ = JSON.parse(tags_data_JSON);
@@ -716,14 +753,23 @@ export class Card extends Widget{
         return Card.create_without_card_set(owner,card_data_, front_, back_, tags_data_, container);
     }
 
+    /**
+     * @returns {Number}
+     */
     get_id() {
         return this.card_data.id;
     }
 
+    /**
+     * @returns {Card_data} internal data of the card
+     */
     get_data(){
         return this.card_data
     }
 
+    /**
+     * @param {Card_data} data 
+     */
     set_data(data){
         this.card_data = data
         if (this.card_set) {
@@ -731,7 +777,11 @@ export class Card extends Widget{
         }
     }
 
-    show_side(instantly = false) {     
+    /**
+     * turn card to the curent side
+     * @param {boolean} instantly true - do not show animation false - show animation
+     */
+    _show_side(instantly = false) {     
         let card = this.container.querySelector('#card-holder' + this.get_id())
         if (this.is_front_side) {
             card.className = instantly? 'rotate-instantly0': 'rotate0';
@@ -741,13 +791,23 @@ export class Card extends Widget{
         }
     }
 
+    /**
+     * change card side to the opposite
+     * @param {boolean} throw_event throw onReverse event or not
+     */
     reverse(throw_event = false) {
         
         this.is_front_side = !this.is_front_side;
-        this.show_side(false)
+        this._show_side(false)
         if (throw_event) this.onReverse?.()
     }
 
+    /**
+     * play move animation
+     * @param {string} in_out 'in' or 'out'
+     * @param {string} direction 'left' or 'right'
+     * @param {function} onAnimationendExternal func to call-back after anim ends 
+     */
     move(in_out,direction, onAnimationendExternal = undefined) {
 
         let onAnimationend = function (event) {               
@@ -769,7 +829,7 @@ export class Card extends Widget{
 
         //new card always created on front side. Need to add  to rotate 
         if (!this.is_front_side) {
-            this.show_side(true)
+            this._show_side(true)
         }
 
         const card_front =this.container.querySelector(".flip-card-front");
@@ -805,6 +865,10 @@ export class Card extends Widget{
         }
     }
 
+    /**
+     * @param {string} FA_name 
+     * @returns {string}
+     */
     get_FA_value(FA_name){
         return this.card_data.FAs[FA_name]
     }
@@ -938,7 +1002,15 @@ export class Card extends Widget{
 
 //Игра. Хранит данные игры (список карты в виде данных JSON)
 export class Card_set extends Saveable {
-    // методы класса
+    
+    /**
+     * @constructor
+     * @param {object} owner 
+     * @param {cards:{Number,Card}, order:{Array.<Number>}} cards from DJANGO API
+     * @param {Object.<tags:{Array.<Tag>}, user_tags:{Array.<Tag>}} tags all possible tags
+     * @param {Array.<string>} front Front attributes of cards
+     * @param {Array.<string>} back  Back attributes of cards
+     */
     constructor(owner, cards, tags, front, back ) {
         super();
         // dict {card.id: card object}
@@ -950,7 +1022,15 @@ export class Card_set extends Saveable {
         this.front = front;
         this.back = back;
         this.show_tags = true;
+        this.owner = owner;
     }
+ 
+     /**
+     * @constructor
+     * @param {Card} card 
+     * @param {Array.<Tag>} tags all possible tags
+     * @returns {Card_set}
+     */
     static create_from_card(card, tags ) {
         let cards = {}
         const id = card.get_id() 
@@ -959,10 +1039,18 @@ export class Card_set extends Saveable {
 
         return new Card_set(card.owner, cards, tags, card.front, card.back)
     }
+
+    /**
+     * @param {Number} card_id 
+     * @param {Card_data} card_data 
+     */
     update_card(card_id,card_data) {
         this.cards[Number(card_id)] = card_data;          
     }
 
+    /**
+     * @returns {Array.<Tag>}
+     */
     get_user_tags() {
         return this.tags.user_tags
     }
@@ -975,11 +1063,19 @@ export class Card_set extends Saveable {
         return this.current_card_number
     }
 
+    /**
+     * @param {Card} card 
+     * @returns {Number} 
+     */
     get_card_number(card) {
         const id = card.get_id();
         return this.order.findIndex(x => x == id)
     }
 
+    /**
+     * Changes current card of card_set
+     * @param {Number} increment 
+     */
     change_card(increment) {
         let new_card_number = this.current_card_number + increment;
         new_card_number = new_card_number < 0? 0:new_card_number;
@@ -987,10 +1083,21 @@ export class Card_set extends Saveable {
         this.current_card_number = new_card_number;
     }
 
+    /**
+     * Creates Card object stored in card_set on position <Number>
+     * @param {Number} number 
+     * @param {HTMLElement} container 
+     * @returns {Card}
+     */
     get_card(number, container) {
         return new Card(this.owner, this.cards[this.order[number]], this.front, this.back, this, container)
     }
 
+    /**
+     * @param {Number} card_id 
+     * @param {String} FA 
+     * @returns {String}
+     */
     get_card_FA_value(card_id,FA){
         return this.cards[card_id].FAs[FA]      
     }

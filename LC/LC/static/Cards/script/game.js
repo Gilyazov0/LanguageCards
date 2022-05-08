@@ -53,11 +53,9 @@ class Abstract_game extends Widget{
 
     show(){
         if (!super.show()) return false;
-        switch(this._state){
-            case State.settings: return this._show_settings()
-            case State.game: return this._show_game()
-            default: throw new Error('Unknown state');                
-        }        
+        if (this._state.is_in_state(State.settings)) return this._show_settings()
+        else if (this._state.is_in_state(State.game)) return this._show_game()
+        else throw new Error('Unknown state'); 
     }
 
     start(){
@@ -142,8 +140,10 @@ class Abstract_game extends Widget{
         return undefined
     }
 
-    _is_answered(){
-        return (this.user_answers[this._get_current_answer_key()] !==undefined)     
+    _is_answered(answer_key = undefined){
+        let new_answer_key = answer_key;
+        if (new_answer_key == undefined) new_answer_key = this._get_current_answer_key() 
+        return (this.user_answers[new_answer_key] !==undefined)     
     }
 
     _save_answer(is_right,answer){
@@ -172,13 +172,11 @@ class Abstract_game extends Widget{
     }
 
     _getHTML(){    
-        switch(this._state){
-            case State.settings: return this._getHTML_settings()
-                          
-            case State.game: return this._getHTML_game()
 
-            default: throw new Error('Unknown state'); 
-        }         
+        if (this._state.is_in_state(State.settings)) return this._getHTML_settings()
+        else if (this._state.is_in_state(State.game)) return this._getHTML_game()
+        else throw new Error('Unknown state'); 
+  
     }
 
     _getHTML_settings(){
@@ -232,7 +230,7 @@ class Abstract_game extends Widget{
         
         this.selected_tags = this.get_selected_tags();        
 
-                fetch('/Cards/get_cards', {
+                fetch('/Cards/get_cards_count', {
                     method: 'POST',
                     body: JSON.stringify({
                         tag_filter: this.selected_tags
@@ -241,7 +239,7 @@ class Abstract_game extends Widget{
                 )
                     .then(response => response.json())
                     .then(result => {
-                        const card_count = result.cards.order.length;
+                        const card_count = result.cards_count;
                         const lable = this.container.querySelector("#lable-cards-count")
                         if (lable != null) {
                             if (card_count == 0) {
@@ -257,7 +255,7 @@ class Abstract_game extends Widget{
     } 
 
     _update_game_page() {     
-        if (this.display_timer){   
+        if (this.display_timer && !this._state.is_in_state(State.results)){   
             if (!this._is_answered()){
                 this.timer.reset();
                 this.timer.start();
@@ -285,6 +283,9 @@ class Simple_game extends Abstract_game {
         this.container.querySelector('#show-prev-card-btn').onclick = this._show_new_card.bind(this,'left') ;
         this.container.querySelector('#show-next-card-btn').onclick = this._show_new_card.bind(this,'right');
         this.container.querySelector('#reverse-card-btn').onclick = function () {this.active_card_obj.reverse(true);}.bind(this);
+        this.container.querySelector('#results_right').onclick = this._show_results.bind(this,'results_right')
+        this.container.querySelector('#results_wrong').onclick = this._show_results.bind(this,'results_wrong')
+        
         this._activate_swipes()
 
         if (this.display_timer){
@@ -295,6 +296,16 @@ class Simple_game extends Abstract_game {
    
         return super._show_game();      
     } 
+
+    _show_results(right_or_wrong='results_right'){
+        if (this._state !=State[right_or_wrong]){ 
+            this._state = State[right_or_wrong];
+            this.timer.disable();
+        } else {
+            this._state = State.game;  
+        }
+        this._update_game_page();
+    }
 
     _getHTML_game(){
 
@@ -316,19 +327,21 @@ class Simple_game extends Abstract_game {
         <div id="full_card_set" style="display:none">
         <div class = "game-control-bar">
             <div id="score" style="display:none">
-                <div id = "right_answers" class="score_badge badge-success"><h2>12</h2></div>
-                <div id = "wrong_answers" class="score_badge badge-danger"><h2>11</h2></div>
+                <div id = "results_right" class="score_badge badge-success"><h2>12</h2></div>
+                <div id = "results_wrong" class="score_badge badge-danger"><h2>11</h2></div>
                 <div class ='flex-grow-1'> </div>
             </div>
             <div class = ""><div id = "timer_container" class="col-auto-1"> </div></div>
         </div>
-
         <div id = "current_card"></div>
-        <div id = "aditional_controls"> </div>
-        <div class = "game-control-bar">    
-        <button class="btn btn-primary game-control" id="show-prev-card-btn" ><h1><i class="bi bi-arrow-left"></i> </h1></button>
-        <button class="btn btn-primary game-control " id="reverse-card-btn" ><h1><i class="bi bi-arrow-repeat"></i> </h1></button>
-        <button class="btn btn-primary game-control" id="show-next-card-btn"  ><h1><i class="bi bi-arrow-right"></i></h1></button>
+        <div id ="game_results"></div>
+        <div id ="game_controls">
+            <div id = "aditional_controls"> </div>
+            <div id = "simple_game_controls" class = "game-control-bar">    
+                <button class="btn btn-primary game-control" id="show-prev-card-btn" ><h1><i class="bi bi-arrow-left"></i> </h1></button>
+                <button class="btn btn-primary game-control " id="reverse-card-btn" ><h1><i class="bi bi-arrow-repeat"></i> </h1></button>
+                <button class="btn btn-primary game-control" id="show-next-card-btn"  ><h1><i class="bi bi-arrow-right"></i></h1></button>
+           </div>
         </div>
         </div>`;
 
@@ -345,8 +358,8 @@ class Simple_game extends Abstract_game {
         const score = this.container.querySelector('#score')
         if (this.display_score){
             score.style.display = 'flex'
-            score.querySelector('#wrong_answers').innerHTML = this.wrong_answers;
-            score.querySelector('#right_answers').innerHTML = this.right_answers;
+            score.querySelector('#results_wrong').innerHTML = this.wrong_answers;
+            score.querySelector('#results_right').innerHTML = this.right_answers;
         }
         else score.style.display = 'none'
 
@@ -362,7 +375,54 @@ class Simple_game extends Abstract_game {
       
             if(show_card) this._new_active_card_obj().show();                     
         }
+
+        this._show_game_or_results()
+
         super._update_game_page();
+     }
+
+    //show game results or game itself 
+    _show_game_or_results(){
+        let game_elements = ['current_card','game_controls'];
+        let result_elements = ['game_results'];
+        let game_elements_state = 'block'
+        let result_elements_state = 'none'
+        
+
+        if (this.state.is_in_state(State.results)){
+            game_elements_state = 'none'
+            result_elements_state = 'block'
+        }
+
+        for (let i=0;i<game_elements.length;i++){
+            this.container.querySelector(`#${game_elements[i]}`).style.display = game_elements_state;  
+        }
+
+        for (let i=0;i<result_elements.length;i++){
+            this.container.querySelector(`#${result_elements[i]}`).style.display = result_elements_state;  
+        }
+        this.container.querySelector("#results_right").classList.remove('border','border-white','border-lg')
+        this.container.querySelector("#results_wrong").classList.remove('border','border-white','border-lg')
+        if (this.state.is_in_state(State.results)){
+            this.container.querySelector("#"+this.state.name).classList.add('border','border-white','border-lg')
+
+            let container = this.container.querySelector("#game_results")
+            container.innerHTML ='';
+            for (let i=0;i<this.card_set.cards_count();i++){
+                
+                let card_container = document.createElement("div")
+                let card = this.card_set.get_card(i,card_container);
+                if (!this._is_answered(card.get_id())) continue;
+                let answer_is_right = this.user_answers[card.get_id()].is_right;
+                if (answer_is_right && this._state.is_in_state(State.results_right)||
+                    !answer_is_right && this._state.is_in_state(State.results_wrong))
+                   {
+                        container.appendChild(card_container)
+                        card.show();
+                   }
+            }
+        }
+        
      }
 
     _show_new_card(direction) {       
@@ -699,7 +759,6 @@ class Variants_game extends Simple_game {
     
 }
 
-
 class Print_game extends Simple_game {
      
     constructor(owner,tags,user_tags,FAs,container=undefined) {
@@ -879,7 +938,6 @@ class MetaGame extends Widget{
 document.addEventListener('DOMContentLoaded', function () {
     const meta_game = new MetaGame(document.querySelector('#meta_game_container'))
     
-
     document.querySelector('#new_game_btn').onclick = function(e) {
         e.stopPropagation();
         e.preventDefault();
@@ -889,5 +947,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
 State.get_or_create_state('settings')
 State.get_or_create_state('game')
-
+State.get_or_create_state('results',State.game)
+State.get_or_create_state('results_wrong',State.results)
+State.get_or_create_state('results_right',State.results)
 

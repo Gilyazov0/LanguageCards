@@ -8,6 +8,7 @@ urlpatterns = [
      path(route='', view=views.game, name='index'),
      path(route='game/', view=views.game, name='game'),
      path(route='get_cards', view=views.get_cards, name='get_cards'),
+     path(route='get_cards_count', view=views.get_cards_count, name='get_cards_count'),
      path(route='get_metadata', view=views.get_metadata, name='get_metadata'),      
      path(route='set_card_tag', view=views.set_card_tag, name='set_card_tag'),     
      path(route='delete_card_tag', view=views.delete_card_tag, name='delete_card_tag'),   

@@ -506,7 +506,7 @@ class Variants_game extends Simple_game {
 
         this.settings_.add_setting(new SelectInput(this,this.FAs[1],'Answer type:', this.FAs),'answer_attribute');
     
-        this.settings_.add_setting(new LableSetting(this,'Select cards to pick answers from'),'variants_tag_selector_lable');
+        //this.settings_.add_setting(new LableSetting(this,'Select cards to pick answers from'),'variants_tag_selector_lable');
     
         let captions = {'include':'Add cards with tags:','exclude':'except cards with tags:'}
         this.settings_.add_setting(new Tag_selector_set(this, undefined, this.user_tags, this.tags, captions),'variants_tag_selector');

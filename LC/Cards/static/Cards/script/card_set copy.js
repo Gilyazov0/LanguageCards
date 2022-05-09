@@ -202,8 +202,7 @@ export class Widget extends Saveable{
         if (this.container) {
             this.container.innerHTML = this._getHTML()
             return true
-        } else
-         return false
+        } else return false
     }
     /**
      * 
@@ -988,7 +987,6 @@ export class Setting extends Widget{
     show(){
         if (!this.visible) return false
         if (!super.show()) return false
-        return true
     }
 }
 
@@ -998,7 +996,7 @@ export class LableSetting extends Setting{
     }
     
     _getHTML(){
-        return `<h5 id ='${this.name}'>${this.value}</h5>`
+        return `<h5 id ='${this.name}'>${this.initial_value}</h5>`
     }
 }
 export class SimpleInput extends Setting{
@@ -1006,7 +1004,9 @@ export class SimpleInput extends Setting{
         super(owner, initial_value,container);
         this.lable = lable;
         this.type= undefined;
+
     }
+
     _getHTML(){
       return  ` 
         <div class="form-group group-gp">

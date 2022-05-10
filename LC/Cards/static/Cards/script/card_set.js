@@ -772,7 +772,7 @@ export class Card extends Widget {
         for (let i = 0; i < sides.length; i++) {
 
             let attributes = (sides[i]) ? this.front : this.back;
-            let show_tags = (sides[i]) ? false : this.show_tags;
+            let show_tags = !sides[i];
             let tags = this.card_data.tags;
             // user tags applyed to this card
             let card_user_tags = this.card_data.user_tags;
@@ -867,7 +867,7 @@ export class Card_set extends Saveable {
         this.current_card_number = 0;
         this.front = front;
         this.back = back;
-        this.show_tags = true;
+        //this.show_tags = true;
         this.owner = owner;
         this._do_not_save.push('owner')
 

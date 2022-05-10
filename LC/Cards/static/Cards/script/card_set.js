@@ -976,6 +976,10 @@ export class Setting extends Widget {
         this.show();
     }
 
+    get_user_value() {
+        return this._value;
+    }
+
     show() {
         if (!this.visible) return false
         if (!super.show()) return false
@@ -1263,6 +1267,11 @@ export class Tag_selector_set extends Setting {
         return this.get_selected_tags()
     }
 
+    get_user_value() {
+        return this.get_selected_tags();
+    }
+
+
     set value(value) {
         this.tag_selectors = []
         const selected_tags = value;
@@ -1287,7 +1296,7 @@ export class Settings extends Widget {
     constructor(owner, container = undefined) {
         super(owner, container)
         this._settings = [] 
-        this.do_not_load = []
+        //this.do_not_load = []
 
     }
 
@@ -1307,7 +1316,7 @@ export class Settings extends Widget {
                 && new_settings[setting.name] instanceof Setting
                 //&& !this.do_not_load.includes(setting.name)
                 ){
-                setting.value = new_settings[setting.name].value;
+                setting.value = new_settings[setting.name].get_user_value();
             }
         }
     }

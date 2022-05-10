@@ -76,7 +76,6 @@ class Card(models.Model):
 
         return f"id: {self.id} {FAs} {tags}"
 
-
 class Face_attribute(models.Model):
     name = models.CharField(null=False, max_length=50, unique=True)
 
@@ -84,7 +83,6 @@ class Face_attribute(models.Model):
         return self.name
     def serialize(self):
         return self.name
-
 
 class FA_value (models.Model):
     card = models.ForeignKey(
@@ -95,3 +93,10 @@ class FA_value (models.Model):
 
     def __str__(self):
         return  '!!!'#f"{self.card.id}.{self.FA} = {self.value}"
+
+class Game_Settings(models.Model):
+     user = models.ForeignKey(User, blank=False,null=False, on_delete=models.CASCADE)
+     value = models.TextField()
+     name = models.CharField(max_length=50, blank=False, null=False)
+     class Meta:
+        unique_together = (('name', 'user'),)

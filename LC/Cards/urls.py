@@ -23,4 +23,7 @@ urlpatterns = [
      path('test/', views.test, name='test'), 
      path('search/', views.search, name='search'), 
      path('card_list/', views.card_list, name='card_list'), 
+     path('save_game_settings/', views.save_game_settings, name='save_game_settings'), 
+     path('get_game_settings/', views.get_game_settings, name='get_game_settings'), 
+      
  ]  + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT) 

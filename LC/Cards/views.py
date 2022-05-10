@@ -1,11 +1,10 @@
-from cProfile import Profile
 from django.urls import reverse
 from xmlrpc.client import ResponseError
 from django.shortcuts import get_object_or_404, render
 from django.http import HttpResponseRedirect, JsonResponse, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 
-from .models import Card, Tag, FA_value, Face_attribute
+from .models import Card, Tag, FA_value, Face_attribute, Game_Settings
 from random import shuffle
 import json
 from django.shortcuts import render, redirect
@@ -330,3 +329,20 @@ def card_list(request):
          
     
     return render(request, 'Cards/card_list.html',context )
+
+@csrf_exempt
+def save_game_settings(request):
+    if request.method =='POST' and request.user.is_authenticated:
+        data = json.loads(request.body)
+        settings, created = Game_Settings.objects.get_or_create(user=request.user, name=data['name'])
+        settings.value = data['value']
+        settings.save()
+        return JsonResponse({})
+
+@csrf_exempt
+def get_game_settings(request):
+    if request.method =='POST' and request.user.is_authenticated:
+        data = json.loads(request.body)
+        settings = get_object_or_404(Game_Settings, user=request.user, name=data['name'])
+
+        return JsonResponse({'settings': settings.value})

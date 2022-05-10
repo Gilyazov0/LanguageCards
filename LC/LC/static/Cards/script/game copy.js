@@ -1,4 +1,4 @@
-import {Card_set, Tag_selector, LableSetting, Tag_selector_set, Widget, State, Timer,Settings, SelectInput, BooleanInput, NumericInput} from './card_set.js'
+import {Card_set,Tag_selector,LableSetting,Tag_selector_set,Settings, Widget, State, Timer,Settings_,SelectInput, BooleanInput, NumericInput} from './card_set.js'
 
 function generateRandomInteger(max) {
     return Math.floor(Math.random() * max) + 1;
@@ -13,6 +13,7 @@ class Abstract_game extends Widget{
         this.tags = tags; //[{'name':name,'id': id},{}...]
         this.user_tags = user_tags;//[{'name':name,'id': id},{}...]
         this.FAs = FAs;//[FA1_name,FA2_name...]
+        this.settings = undefined; // Settings instance
         this.name = 'Abstract game'
             
         this.back_attributes = undefined;
@@ -21,17 +22,17 @@ class Abstract_game extends Widget{
         this.right_answers = 0;
         this.user_answers = {};//{answer_key: Is_right}
 
-        this.settings = new Settings(this, undefined)
-        this.settings.add_setting(new SelectInput(this,this.FAs[0],'Front side:', this.FAs),'front_attribute');
-        this.settings.add_setting(new NumericInput(this,30,'Answer time:'),'answer_time');
+        this.settings_ = new Settings_(this, undefined)
+        this.settings_.add_setting(new SelectInput(this,this.FAs[0],'Front side:', this.FAs),'front_attribute');
+        this.settings_.add_setting(new NumericInput(this,30,'Answer time:'),'answer_time');
 
         let captions = {'include':'Add cards with tags:','exclude':'except cards with tags:'}
-        this.settings.add_setting(new Tag_selector_set(this, undefined, this.user_tags, this.tags, captions),'tag_selectors_set');
-        this.settings.tag_selectors_set.onChange = function(){ this._update_settings_page() }.bind(this);
+        this.settings_.add_setting(new Tag_selector_set(this, undefined, this.user_tags, this.tags, captions),'tag_selectors_set');
+        this.settings_.tag_selectors_set.onChange = function(){ this._update_settings_page() }.bind(this);
    
         
         this.display_timer = false;
-        this.timer = new Timer(this,this.settings.answer_time.value,'1.5rem'); 
+        this.timer = new Timer(this,this.settings_.answer_time.value,'1.5rem'); 
         this.timer.onChange = this._timer_change.bind(this);
         this.sounds = {} //{'path': Audio('path')}
   
@@ -69,7 +70,18 @@ class Abstract_game extends Widget{
     }
 
     get_selected_tags() {
-        return this.settings.tag_selectors_set.value;        
+        return this.settings_.tag_selectors_set.value;        
+    }
+
+    load_settings(settings){
+        this.settings = settings
+        this.settings_.tag_selectors_set.set_settings(settings.get('tag_selectors_set_stgs'))        
+    }
+
+    save_settings(){
+        if (this.settings == undefined) this.settings = new Settings()
+        this.settings.set('tag_selectors_set_stgs', this.settings_.tag_selectors_set.get_settings())
+        return this.settings
     }
 
     _play_sound(path){
@@ -89,8 +101,8 @@ class Abstract_game extends Widget{
     }
 
     _show_settings(){
-        this.settings.set_container(this.container.querySelector('#settings_container'))
-        this.settings.show()
+        this.settings_.set_container(this.container.querySelector('#settings_container'))
+        this.settings_.show()
         
         this.container.querySelector('#start-game-btn').onclick = function (e) { this.start()}.bind(this);
        
@@ -109,7 +121,7 @@ class Abstract_game extends Widget{
         )
             .then(response => response.json())
             .then(result => {                
-                this.card_set = new Card_set(this, result.cards, result.tags, [this.settings.front_attribute.value], this.back_attributes);
+                this.card_set = new Card_set(this, result.cards, result.tags, [this.settings_.front_attribute.value], this.back_attributes);
                 this._update_game_page()
             })
         return true;
@@ -143,11 +155,11 @@ class Abstract_game extends Widget{
     _update_selected_settings(){
         
         let back_attributes = [...this.FAs];
-        const front_attribute = this.settings.front_attribute.value;
+        const front_attribute = this.settings_.front_attribute.value;
         this.back_attributes = back_attributes.filter((value)=>{return value !=front_attribute});
 
-        if (this.settings.answer_time.value) {
-            this.timer.reset(this.settings.answer_time.value)
+        if (this.settings_.answer_time.value) {
+            this.timer.reset(this.settings_.answer_time.value)
         };
     }
 
@@ -166,6 +178,9 @@ class Abstract_game extends Widget{
                 <h1>Number of cards in game</h1>
             </div>
             <div id="settings_container"> </div>
+            <div>
+                <div id='additional_settings'> </div>
+            </div>
             <div class="alert alert-primary" style="padding:10px">                                  
                 <div style="text-align: center" >
                     <button class="btn btn-primary" id = 'start-game-btn'>
@@ -181,30 +196,31 @@ class Abstract_game extends Widget{
         return "<div>Game over</div>"
     }
 
-    _update_settings_page() {
-       
-        fetch('/Cards/get_cards_count', {
-            method: 'POST',
-            body: JSON.stringify({
-                tag_filter: this.get_selected_tags()
-            })
-        }
-        )
-            .then(response => response.json())
-            .then(result => {
-                const card_count = result.cards_count;
-                const lable = this.container.querySelector("#lable-cards-count")
-                if (lable != null) {
-                    if (card_count == 0) {
-                        lable.innerHTML = `<h1>No cards found</h1>`
-                        lable.className = "alert alert-warning"
-                    }
-                    else {
-                        lable.innerHTML = `<h1>Selected ${card_count} cards</h1>`
-                        lable.className = "alert alert-primary"
-                    }
+    _update_settings_page(){
+        
+    
+                fetch('/Cards/get_cards_count', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        tag_filter: this.get_selected_tags()
+                    })
                 }
-            })
+                )
+                    .then(response => response.json())
+                    .then(result => {
+                        const card_count = result.cards_count;
+                        const lable = this.container.querySelector("#lable-cards-count")
+                        if (lable != null) {
+                            if (card_count == 0) {
+                                 lable.innerHTML = `<h1>No cards found</h1>`
+                                 lable.className = "alert alert-warning"
+                               }
+                            else {
+                                lable.innerHTML = `<h1>Selected ${card_count} cards</h1>`
+                                lable.className = "alert alert-primary"
+                            }
+                        }
+                    })
     } 
 
     _update_game_page() {     
@@ -225,8 +241,7 @@ class Simple_game extends Abstract_game {
         this.active_card_obj = undefined;       
         this.active_card_container = undefined; //DOM элемент содержащий текущую карту        
         this.name = 'Simple game'   
-        this.settings.add_setting(new BooleanInput(this,true,'Show score:'),'display_score');        
-
+        this.settings_.add_setting(new BooleanInput(this,true,'Show score:'),'display_score');
     }     
     
     _show_game(){      
@@ -311,7 +326,7 @@ class Simple_game extends Abstract_game {
         const full_card_set = this.container.querySelector('#full_card_set')
         this.container.querySelector('#loading').style.display = 'none' 
         const score = this.container.querySelector('#score')
-        if (this.settings.display_score.value){
+        if (this.settings_.display_score.value){
             score.style.display = 'flex'
             score.querySelector('#results_wrong').innerHTML = this.wrong_answers;
             score.querySelector('#results_right').innerHTML = this.right_answers;
@@ -378,7 +393,7 @@ class Simple_game extends Abstract_game {
                         CardIDS = CardIDS+'&id='+card.get_id()
                    }
             }
-            const url = `/Cards/card_list/?FA=${this.settings.front_attribute.value}${CardIDS}`
+            const url = `/Cards/card_list/?FA=${this.settings_.front_attribute.value}${CardIDS}`
             this.container.querySelector("#get_result_cards").setAttribute("href", url);
 
         }
@@ -428,12 +443,12 @@ class Simple_score_game extends Simple_game {
              
         this.name = 'Simple score game'  
         this.answer = undefined;
-        this.settings.answer_time.visible = false;
+        this.settings_.answer_time.visible = false;
     }    
 
     _show_game(){
 
-        if(this.settings.display_score.value) {
+        if(this.settings_.display_score.value) {
             let aditional_controls = this.container.querySelector("#aditional_controls");
             aditional_controls.innerHTML = this._getHTML_simple_score_game_controls();
             
@@ -478,26 +493,23 @@ class Variants_game extends Simple_game {
     constructor(owner,tags,user_tags,FAs,container=undefined) {
         super(owner,tags,user_tags,FAs,container)        
         this.name = 'Variants game'   
-        this.settings.display_score.value = true;
+        this.settings_.display_score.value = true;
         this.display_timer = true;
-        this.settings.answer_time.value = 60;
+        this.settings_.answer_time.value = 60;
 
         this.variants_card_set = undefined;
         this.answer_variants = undefined;//{card_id:[sting]}
         this.answer = undefined;
         this.answer_variants = undefined;
 
-        this.settings.display_score.override_value = true;
-        this.settings.display_score.visible = false;
+        this.settings_.add_setting(new NumericInput(this,4,'Number of variants:'),'number_of_variants');
 
-        this.settings.add_setting(new NumericInput(this,4,'Number of variants:'),'number_of_variants');
-
-        this.settings.add_setting(new SelectInput(this,this.FAs[1],'Answer type:', this.FAs),'answer_attribute');
+        this.settings_.add_setting(new SelectInput(this,this.FAs[1],'Answer type:', this.FAs),'answer_attribute');
     
-        this.settings.add_setting(new LableSetting(this,'Select cards to pick answers from'),'variants_tag_selector_lable');
+        //this.settings_.add_setting(new LableSetting(this,'Select cards to pick answers from'),'variants_tag_selector_lable');
     
         let captions = {'include':'Add cards with tags:','exclude':'except cards with tags:'}
-        this.settings.add_setting(new Tag_selector_set(this, undefined, this.user_tags, this.tags, captions),'variants_tag_selector');
+        this.settings_.add_setting(new Tag_selector_set(this, undefined, this.user_tags, this.tags, captions),'variants_tag_selector');
     
     } 
 
@@ -506,7 +518,7 @@ class Variants_game extends Simple_game {
         let aditional_controls = this.container.querySelector("#aditional_controls")
         aditional_controls.innerHTML = this._getHTML_variants_game_controls()
 
-        for (let i=0;i<this.settings.number_of_variants.value;i++){
+        for (let i=0;i<this.settings_.number_of_variants.value;i++){
             this.container.querySelector(`#answer_button_${i}`).onclick =
             function(event){
                 this.answer = event.target.innerHTML; 
@@ -518,12 +530,12 @@ class Variants_game extends Simple_game {
         fetch('/Cards/get_cards', {
             method: 'POST',
             body: JSON.stringify({
-                tag_filter: this.settings.variants_tag_selector.value
+                tag_filter: this.settings_.variants_tag_selector.value
             })        }
         )
             .then(response => response.json())
             .then(result => {                
-                this.variants_card_set = new Card_set(this, result.cards, result.tags, [this.settings.front_attribute.value], this.back_attributes);
+                this.variants_card_set = new Card_set(this, result.cards, result.tags, [this.settings_.front_attribute.value], this.back_attributes);
                 this._update_game_page()
             })
         return super._show_game();
@@ -537,7 +549,7 @@ class Variants_game extends Simple_game {
             for (let i=0;i<10;i++){  
                 let variant_id = this.variants_card_set.order[
                 generateRandomInteger(this.variants_card_set.order.length)-1];
-                variant = this.variants_card_set.get_card_FA_value(variant_id,this.settings.answer_attribute.value)
+                variant = this.variants_card_set.get_card_FA_value(variant_id,this.settings_.answer_attribute.value)
                 if (variant) break
             }
             return variant;
@@ -547,23 +559,22 @@ class Variants_game extends Simple_game {
         
         for (let id in  this.card_set.cards){
             this.answer_variants[id] = [];
-            for (let i=0; i<this.settings.number_of_variants.value-1;i++){
+            for (let i=0; i<this.settings_.number_of_variants.value-1;i++){
                 let variant = _get_random_variant();
                 this.answer_variants[id].push(variant);
             }
-            let right_variant_place = generateRandomInteger(this.settings.number_of_variants.value)-1; 
-            let right_variant =  this.card_set.get_card_FA_value(id,this.settings.answer_attribute.value)
+            let right_variant_place = generateRandomInteger(this.settings_.number_of_variants.value)-1; 
+            let right_variant =  this.card_set.get_card_FA_value(id,this.settings_.answer_attribute.value)
             this.answer_variants[id].splice(right_variant_place, 0, right_variant);
         }
     }
-
     start(){
         this.answer_variants = undefined;
         super.start()
     }
 
     _update_answer_buttons(){
-        for (let i=0;i<this.settings.number_of_variants.value;i++){
+        for (let i=0;i<this.settings_.number_of_variants.value;i++){
             let button = this.container.querySelector(`#answer_button_${i}`);
             button.value = this.answer_variants[this.active_card_obj.get_id()][i];
             button.innerHTML = button.value;
@@ -588,9 +599,9 @@ class Variants_game extends Simple_game {
 
     _getHTML_variants_game_controls(){
         let result ='';
-        for (let i=0;i<this.settings.number_of_variants.value;i+=2){
+        for (let i=0;i<this.settings_.number_of_variants.value;i+=2){
             let variant2 ='';
-            if (i<this.settings.number_of_variants.value-1) {variant2 =`
+            if (i<this.settings_.number_of_variants.value-1) {variant2 =`
                 <div style="width:calc(50% - 5px)">
                     <button id="answer_button_${i+1}" class="form-control btn btn-primary">answer</button>
                 </div>`
@@ -608,14 +619,14 @@ class Variants_game extends Simple_game {
     _check_answer(){
 
         let is_right = false;
-        let right_answer = this.active_card_obj.get_FA_value(this.settings.answer_attribute.value);
+        let right_answer = this.active_card_obj.get_FA_value(this.settings_.answer_attribute.value);
         if (this.answer == right_answer)          
             is_right = true;           
         else 
             is_right = false; 
            
     
-        for (let i=0;i<this.settings.number_of_variants.value;i++){
+        for (let i=0;i<this.settings_.number_of_variants.value;i++){
             let button = this.container.querySelector(`#answer_button_${i}`);
             if (button.value == right_answer) 
                 button.classList.replace('btn-primary','btn-success')
@@ -639,29 +650,29 @@ class Variants_game extends Simple_game {
         this.answer = undefined
         this._check_answer()       
     }
+
+
+
+    
 }
 
 class Print_game extends Simple_game {
      
     constructor(owner,tags,user_tags,FAs,container=undefined) {
         super(owner,tags,user_tags,FAs,container)        
-        this.settings.add_setting(new SelectInput(this,this.FAs[1],'Answer type:', this.FAs),'answer_attribute');
-        
-        this.settings.display_score.override_value = true;
-        this.settings.display_score.visible = false;
-
+        this.settings_.add_setting(new SelectInput(this,this.FAs[1],'Answer type:', this.FAs),'answer_attribute');
     
     
         this.name = 'Print game'   
-        this.settings.display_score.value = true;
+        this.settings_.display_score.value = true;
         this.display_timer = true;
-        this.settings.answer_time.value = 60;
+        this.settings_.answer_time.value = 60;
     } 
 
     _getHTML_print_game_controls(){
         return `<div class="game-control-bar mb-3">
                     <div class="col-auto-1 flex-grow-1 mr-1">
-                         <input id="answer" placeholder="${this.settings.answer_attribute.value}" class="form-control" 
+                         <input id="answer" placeholder="${this.settings_.answer_attribute.value}" class="form-control" 
                          type="text" required autofocus>
                     </div>
                     <div class="col-auto-1">
@@ -676,7 +687,7 @@ class Print_game extends Simple_game {
 
         let answer = this.container.querySelector("#answer")
         let is_right = false;
-        if (answer.value.toLowerCase() == this.active_card_obj.get_FA_value(this.settings.answer_attribute.value)?.toLowerCase())          
+        if (answer.value.toLowerCase() == this.active_card_obj.get_FA_value(this.settings_.answer_attribute.value)?.toLowerCase())          
             is_right = true;           
         else 
             is_right = false; 
@@ -717,9 +728,6 @@ class MetaGame extends Widget{
     constructor(container) {
         super(undefined,container)            
         this._state = State.settings;
-        this.settings = new Settings(this)
-        this._do_not_save.push('active_game')
-        
          
         fetch('/Cards/get_metadata', {
             method: 'POST',
@@ -731,30 +739,15 @@ class MetaGame extends Widget{
                 const user_tags = result.user_tags;
                 const FAs = result.FAs;
                 this.games = [new Variants_game(this,tags,user_tags,FAs), new Simple_score_game(this,tags,user_tags,FAs),new Print_game(this,tags,user_tags,FAs) ]
-                let game_list = []
                 for (let i = 0; i<this.games.length;i++)  {
-                    this.games[i].onChange = this._on_game_change.bind(this)
-                    this.settings.agrigate( this.games[i].settings)
-                    game_list.push(this.games[i].name)
+                    this.games[i].onChange = function() {
+                        this._state = this.active_game.state
+                        this.show()
+                    }.bind(this)
                 } 
-                
-                this.settings.add_setting(new SelectInput(this,this.games[0].name,'Select game type:',game_list),"game_type")
-                this.settings.game_type.onChange = this._select_game.bind(this)
-                
-                this.active_game = this.games[0]; 
-                fetch('/Cards/get_game_settings/', {
-                    method: 'POST',
-                    body: JSON.stringify({ 'name': 'last used' })
-                })
-                    .then(response => response.json())
-                    .then(result => {
-                        this.settings.load_from_JSON(JSON.parse(result.settings))
-                        this.active_game.settings.load(this.settings)
-                        this._select_game()
-                        this.new_game()
-                    })                              
-            })          
-        
+                this.active_game = this.games[0];               
+                this.new_game()
+            })   
     }
 
     new_game() {
@@ -762,21 +755,9 @@ class MetaGame extends Widget{
         this.show()
     }    
 
-    _on_game_change(){
-        this._state = this.active_game.state
-        this.settings.agrigate(this.active_game.settings)
-        
-        this.show()
-
-        fetch('/Cards/save_game_settings/', {
-            method: 'POST',
-            body: JSON.stringify({'name':'last used', 'value': JSON.stringify(this.settings.save_to_JSON())})
-        })
-    }
-
     show() {
         if (!super.show()) return false;
-        
+
         this.active_game.set_container(this.container.querySelector('#game_container'));
         // this if needed to avoide several fetch requests from game
         if (!(this.active_game.state == State.game  && this._state == State.game)) 
@@ -790,48 +771,38 @@ class MetaGame extends Widget{
     }
 
     _show_settings(){
-        // let game_selector = this.container.querySelector('#game_selector');
-        // game_selector.onchange = function(e){
-        //     const index = Number(e.target.value);
-        //     this._select_game(index)
-        //     }.bind(this);
-        this.settings.set_container(this.container.querySelector('#meta_game_settings'))
-        this.settings.show()
+        let game_selector = this.container.querySelector('#game_selector');
+        game_selector.onchange = function(e){
+            const index = Number(e.target.value);
+            this._select_game(index)
+            }.bind(this);
     }
 
     _getHTML() {
 
-        let result = '<div id="meta_game_settings" style="padding:5px"></div><div id="game_container" style="padding:5px"></div>'
+        let result = '<div id="game_container" style="padding:5px"></div>'
         if (this._state == State.game) return result
 
-        // let game_selector = `
-        //     <div class="form-group  group-gp" style="padding:5px"> 
-        //         <label class="form-control-lg label-gp">Select game type:</label>
-        //         <select id ="game_selector" class="form-control-lg form-select-lg input-gp flex-grow-1">
-        //        `
-        // for (let i = 0; i < this.games.length; i++) {           
-        //     let is_selected = this.active_game.name == this.games[i].name? 'selected':'';
-        //     game_selector += `<option ${is_selected} value='${i}'>${this.games[i].name} </option>`
-        // }
-        // game_selector += '</select></div>'
+        let game_selector = `
+            <div class="form-group  group-gp" style="padding:5px"> 
+                <label class="form-control-lg label-gp">Select game type:</label>
+                <select id ="game_selector" class="form-control-lg form-select-lg input-gp flex-grow-1">
+               `
+        for (let i = 0; i < this.games.length; i++) {
+            game_selector += `<option value='${i}'>${this.games[i].name}</option>`
+        }
+        game_selector += '</select></div>'
         
-       //result = game_selector  + result;
+        result = game_selector + result;
         return result
      }
 
-     _select_game() {
-        const game_type = this.settings.game_type.value;
-        this.games.forEach(game => {
-            if (game.name == game_type ){
-                this.settings.agrigate(this.active_game.settings)
-                this.active_game = game
-                this.active_game.set_container(this.container.querySelector('#game_container'));
-                this.active_game.settings.load(this.settings);
-                this.active_game.state = State.settings ;                     
-
-            }            
-        });
-        
+     _select_game(index) {
+        let settings = this.active_game.save_settings()
+        this.active_game = this.games[index]       
+        this.active_game.set_container(this.container.querySelector('#game_container'));
+        this.active_game.load_settings(settings);    
+        this.active_game.state = State.settings
      }
 }
 

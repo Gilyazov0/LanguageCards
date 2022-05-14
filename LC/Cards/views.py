@@ -341,8 +341,10 @@ def save_game_settings(request):
 
 @csrf_exempt
 def get_game_settings(request):
-    if request.method =='POST' and request.user.is_authenticated:
-        data = json.loads(request.body)
-        settings = get_object_or_404(Game_Settings, user=request.user, name=data['name'])
+    if request.method =='POST': 
+        settings = ''
+        if request.user.is_authenticated:
+            data = json.loads(request.body)
+            settings = get_object_or_404(Game_Settings, user=request.user, name=data['name']).value       
 
-        return JsonResponse({'settings': settings.value})
+        return JsonResponse({'settings': settings})

@@ -14,7 +14,6 @@ from .models import User
 
 from .forms import *
 
- 
 
 def login_request(request):
     context = {}
@@ -65,7 +64,7 @@ def registration_request(request):
             return render(request, 'Cards/registration.html', context)
 
 
-#Create user tag (not Card user tag!)
+# Create user tag (not Card user tag!)
 def create_tag(request):
     if request.method == "POST" and request.user.is_authenticated:
         user_tag_name = request.POST['user_tag']
@@ -75,24 +74,26 @@ def create_tag(request):
         try:
             tag.save()
         except:
-            pass    
+            pass
         return HttpResponseRedirect(reverse('Cards:profile'))
 
-#Delete user tag (not Card user tag!)
+# Delete user tag (not Card user tag!)
+
+
 def delete_tag(request):
     if request.method == "POST" and request.user.is_authenticated:
         tag_id = int(request.POST['tag_id'])
         tag = get_object_or_404(Tag, pk=tag_id)
-        if tag.user == request.user or is_advanced_user(request.user): 
+        if tag.user == request.user or is_advanced_user(request.user):
             tag.delete()
         return HttpResponseRedirect(reverse('Cards:profile'))
 
 
-#user profile (not Card profile)
+# user profile (not Card profile)
 def profile(request):
     if not request.user.is_authenticated:
         return ResponseError('User is not authenticated')
-    context = {}    
+    context = {}
     context['user_tags'] = Tag.objects.filter(user=request.user)
 
     return render(request, 'Cards/profile.html', context)
@@ -102,20 +103,22 @@ def index(request):
     return render(request, "Cards/index.html",)
 
 
-def game(request):    
+def game(request):
     return render(request, "Cards/game.html")
 
-# filtr = {'keyword': keyword, 'FA': FA}
-def filter_cards_by_keyword(filter):  
-     
-    fa = filter.get('FA')
-    if fa and fa !="Any":
-        return  Card.objects.filter(FAs__value__icontains=filter.get('keyword'), FAs__FA__name=fa).distinct() 
-    else:
-        return Card.objects.filter(FAs__value__icontains=filter.get('keyword')).distinct()   
-   
+# filter = {'keyword': keyword, 'FA': FA}
 
-#filter:[{'include':[tag_id, ..], 'exclude':[tag_id, ...]} ...]
+
+def filter_cards_by_keyword(filter):
+
+    fa = filter.get('FA')
+    if fa and fa != "Any":
+        return Card.objects.filter(FAs__value__icontains=filter.get('keyword'), FAs__FA__name=fa).distinct()
+    else:
+        return Card.objects.filter(FAs__value__icontains=filter.get('keyword')).distinct()
+
+
+# filter:[{'include':[tag_id, ..], 'exclude':[tag_id, ...]} ...]
 def filter_cards_by_tags(filter):
 
     if not filter:
@@ -123,11 +126,10 @@ def filter_cards_by_tags(filter):
 
     cards_result = None
     for tags_pair in filter:
-        
+
         cards = Card.objects.all()
         tags_include = tags_pair.get("include", [])
         tags_exclude = tags_pair.get("exclude", [])
-        
 
         for tag in tags_include:
             cards = cards.filter(tags__id=tag)
@@ -143,40 +145,47 @@ def filter_cards_by_tags(filter):
 def filter_cards(filters):
     cards = Card.objects.all()
     if filters.get('tag_filter'):
-         cards = cards.intersection(filter_cards_by_tags(filters.get('tag_filter')))
-   
-   # {'search': {'keyword': keyword, 'FA': FA}
+        cards = cards.intersection(
+            filter_cards_by_tags(filters.get('tag_filter')))
+
+  # {'search': {'keyword': keyword, 'FA': FA}
     if filters.get('search'):
-         cards = cards.intersection(filter_cards_by_keyword(filters.get('search')))
+        cards = cards.intersection(
+            filter_cards_by_keyword(filters.get('search')))
     return cards
+
 
 @csrf_exempt
 def get_cards(request):
-    data = json.loads(request.body) #{tag_filter:[{'include':[tag_id, ..], 'exclude':[tag_id, ...]} ...]}
-    cards = filter_cards(data)   
-        
-    result = get_card_set_data(cards, request.user)  
+    # {tag_filter:[{'include':[tag_id, ..], 'exclude':[tag_id, ...]} ...]}
+    data = json.loads(request.body)
+    cards = filter_cards(data)
+
+    result = get_card_set_data(cards, request.user)
     shuffle(result['cards']['order'])
 
     return JsonResponse(result, safe=False)
 
+
 @csrf_exempt
 def get_cards_count(request):
-    data = json.loads(request.body) #{tag_filter:[{'include':[tag_id, ..], 'exclude':[tag_id, ...]} ...]}
-    cards = filter_cards(data)   
-        
-    result = {'cards_count':cards.count()}  
-   
+    # {tag_filter:[{'include':[tag_id, ..], 'exclude':[tag_id, ...]} ...]}
+    data = json.loads(request.body)
+    cards = filter_cards(data)
+
+    result = {'cards_count': cards.count()}
+
     return JsonResponse(result, safe=False)
 
+
 def get_card_set_data(cards, user):
-    
+
     cards_dict = {}
     cards_order = []
-    for card in cards:        
+    for card in cards:
         cards_dict[card.id] = card.serialize(user)
         cards_order.append(card.id)
-    
+
     result = {}
     result['cards'] = {'cards': cards_dict, 'order': cards_order}
     result['tags'] = get_tags_dict(user)
@@ -185,24 +194,28 @@ def get_card_set_data(cards, user):
 
 #     return JsonResponse(result, safe=False)
 
-def get_tags_dict(user,add_common_tags = True):
+
+def get_tags_dict(user, add_common_tags=True):
     result = {}
     if add_common_tags:
         tags = Tag.objects.filter(user=None)
         result['tags'] = [tag.serialize() for tag in tags]
     if user.is_authenticated:
-        result['user_tags'] = [tag.serialize() for tag in Tag.objects.filter(user=user)]
+        result['user_tags'] = [tag.serialize()
+                               for tag in Tag.objects.filter(user=user)]
     else:
         result['user_tags'] = []
     return result
 
+
 @csrf_exempt
 def get_metadata(request):
-# return all metadata (data we need to setup a game) of the game. currently tags and FAs    
-    result = get_tags_dict(request.user)  
+    # return all metadata (data we need to setup a game) of the game. currently tags and FAs
+    result = get_tags_dict(request.user)
     result['FAs'] = [FA.serialize() for FA in Face_attribute.objects.all()]
-    
+
     return JsonResponse(result, safe=False)
+
 
 @csrf_exempt
 def set_card_tag(request):
@@ -210,14 +223,15 @@ def set_card_tag(request):
         data = json.loads(request.body)
         tag_id = int(data['tag_id'])
         card_id = int(data['card_id'])
-        card = get_object_or_404(Card,pk = card_id)
-        tag = get_object_or_404(Tag,pk = tag_id)
+        card = get_object_or_404(Card, pk=card_id)
+        tag = get_object_or_404(Tag, pk=tag_id)
         if request.user == tag.user:
-            if not card.tags.filter(id = tag_id):
-                card.tags.add(tag)            
+            if not card.tags.filter(id=tag_id):
+                card.tags.add(tag)
                 card.save()
-            
+
     return JsonResponse(card.serialize(request.user), safe=False)
+
 
 @csrf_exempt
 def delete_card_tag(request):
@@ -225,67 +239,73 @@ def delete_card_tag(request):
         data = json.loads(request.body)
         tag_id = int(data['tag_id'])
         card_id = int(data['card_id'])
-        card = get_object_or_404(Card,pk = card_id)
-        tag = get_object_or_404(Tag,pk = tag_id)
+        card = get_object_or_404(Card, pk=card_id)
+        tag = get_object_or_404(Tag, pk=tag_id)
         if request.user == tag.user:
-            if card.tags.filter(id = tag_id):
+            if card.tags.filter(id=tag_id):
                 card.tags.remove(tag)
                 card.save()
     return JsonResponse(card.serialize(request.user), safe=False)
 
+
 def is_advanced_user(user):
     return user.is_authenticated and user.profile.is_advanced_user
 
+
 def card_profile(request, card_id):
-    message =''
-    card = get_object_or_404(Card,pk = card_id)
+    message = ''
+    card = get_object_or_404(Card, pk=card_id)
     if request.method == "POST" and is_advanced_user(request.user):
         if request.POST['action'] == 'Save':
-            form = CardForm(request.POST, user = request.user,instance=card)
+            form = CardForm(request.POST, user=request.user, instance=card)
             if form.is_valid():
                 form.save()
-                message = 'Card succesfully saved'
+                message = 'Card successfully saved'
         if request.POST['action'] == 'Delete':
             card.delete()
-            return HttpResponse("Card succesfully deleted")
+            return HttpResponse("Card successfully deleted")
     else:
-        form = CardForm(instance=card, user =request.user)    
+        form = CardForm(instance=card, user=request.user)
     context = {}
-    context['tags_data'] = json.dumps(get_tags_dict(request.user,False))
-    context['form'] = form 
-    context['card_id'] = card_id 
+    context['tags_data'] = json.dumps(get_tags_dict(request.user, False))
+    context['form'] = form
+    context['card_id'] = card_id
     context['card_data'] = json.dumps(card.serialize(request.user))
     context['message'] = message
     return render(request, 'Cards/card_profile.html', context)
+
 
 def new_card(request):
     message = ''
     card_data = ''
     context = {}
     is_card_created = False
-    if request.method == "POST" and is_advanced_user(request.user):        
-        form = CardForm(request.POST, user = request.user)
+    if request.method == "POST" and is_advanced_user(request.user):
+        form = CardForm(request.POST, user=request.user)
         if form.is_valid():
             card = form.save()
             is_card_created = True
             card_data = json.dumps(card.serialize(request.user))
-   
-    initial = {}    
-    if is_card_created:
-        initial['common_tags'] = [t.pk for t in card.tags.filter(user = None)]
-        initial['user_tags'] = [t.pk for t in card.tags.filter(user = request.user)]
-        message = 'Card succesfully created' 
 
-    form = CardForm( user =request.user,initial = initial)    
-    context['tags_data'] = json.dumps(get_tags_dict(request.user,False))
-    context['form'] = form 
-    context['message'] = message 
+    initial = {}
+    if is_card_created:
+        initial['common_tags'] = [t.pk for t in card.tags.filter(user=None)]
+        initial['user_tags'] = [
+            t.pk for t in card.tags.filter(user=request.user)]
+        message = 'Card successfully created'
+
+    form = CardForm(user=request.user, initial=initial)
+    context['tags_data'] = json.dumps(get_tags_dict(request.user, False))
+    context['form'] = form
+    context['message'] = message
     context['card_data'] = card_data
-   
+
     return render(request, 'Cards/new_card.html', context)
+
 
 def test(request):
     return render(request, 'Cards/test.html', {})
+
 
 @csrf_exempt
 def search(request):
@@ -293,58 +313,63 @@ def search(request):
 
     FAs_options = ['Any'] + FA_data
 
-    if request.method == "GET": 
+    if request.method == "GET":
         return render(request, 'Cards/search.html', {'FAs_options': FAs_options})
-    
+
     if request.method == "POST":
-        filter = {'search': {'keyword': request.POST['search'], "FA":request.POST['FA']}}
-        cards = filter_cards(filter)    
-        cards = cards[:10]         
-       
+        filter = {'search': {
+            'keyword': request.POST['search'], "FA": request.POST['FA']}}
+        cards = filter_cards(filter)
+        cards = cards[:10]
+
         data = json.dumps(get_card_set_data(cards, request.user))
-        context ={
+        context = {
             'FAs_options': FAs_options,
-            'card_set_data':data,
-            'cards_count':range(len(cards)),
+            'card_set_data': data,
+            'cards_count': range(len(cards)),
             'search':  request.POST['search'],
             'defaultFA': request.POST['FA'],
             'FA_data': json.dumps(FA_data)
         }
-         
+
         return render(request, 'Cards/search.html', context)
+
 
 def card_list(request):
 
-    cards_ids =  [int(id) for id in request.GET.getlist('id')] 
-    cards = Card.objects.filter(id__in = cards_ids)
+    cards_ids = [int(id) for id in request.GET.getlist('id')]
+    cards = Card.objects.filter(id__in=cards_ids)
     data = json.dumps(get_card_set_data(cards, request.user))
     FA_data = [x.serialize() for x in Face_attribute.objects.all()]
 
-    context ={
-            'card_set_data':data,
-            'cards_count':range(len(cards)),
-            'defaultFA': request.GET['FA'],
-            'FA_data': json.dumps(FA_data)
-        }
-         
-    
-    return render(request, 'Cards/card_list.html',context )
+    context = {
+        'card_set_data': data,
+        'cards_count': range(len(cards)),
+        'defaultFA': request.GET['FA'],
+        'FA_data': json.dumps(FA_data)
+    }
+
+    return render(request, 'Cards/card_list.html', context)
+
 
 @csrf_exempt
 def save_game_settings(request):
-    if request.method =='POST' and request.user.is_authenticated:
+    if request.method == 'POST' and request.user.is_authenticated:
         data = json.loads(request.body)
-        settings, created = Game_Settings.objects.get_or_create(user=request.user, name=data['name'])
+        settings, created = Game_Settings.objects.get_or_create(
+            user=request.user, name=data['name'])
         settings.value = data['value']
         settings.save()
         return JsonResponse({})
 
+
 @csrf_exempt
 def get_game_settings(request):
-    if request.method =='POST': 
+    if request.method == 'POST':
         settings = ''
         if request.user.is_authenticated:
             data = json.loads(request.body)
-            settings = get_object_or_404(Game_Settings, user=request.user, name=data['name']).value       
+            settings = get_object_or_404(
+                Game_Settings, user=request.user, name=data['name']).value
 
         return JsonResponse({'settings': settings})

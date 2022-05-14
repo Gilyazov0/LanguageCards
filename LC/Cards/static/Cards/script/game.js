@@ -97,17 +97,12 @@ class Abstract_game extends Widget {
     this.show();
   }
 
-  get_selected_tags() {
-    return this.settings.tag_selectors_set.value;
-  }
-
   _play_sound(path) {
     if (!this.sounds[path]) this.sounds[path] = new Audio(path);
     this.sounds[path].play();
   }
 
   /**
-   *
    * @param {State} new_state
    * @param {Boolean} throw_onChange
    */
@@ -135,7 +130,7 @@ class Abstract_game extends Widget {
     fetch("/Cards/get_cards", {
       method: "POST",
       body: JSON.stringify({
-        tag_filter: this.get_selected_tags(),
+        tag_filter: this.settings.tag_selectors_set.value,
       }),
     })
       .then((response) => response.json())
@@ -224,7 +219,7 @@ class Abstract_game extends Widget {
     fetch("/Cards/get_cards_count", {
       method: "POST",
       body: JSON.stringify({
-        tag_filter: this.get_selected_tags(),
+        tag_filter: this.settings.tag_selectors_set.value,
       }),
     })
       .then((response) => response.json())
@@ -255,7 +250,7 @@ class Abstract_game extends Widget {
 
 class Simple_game extends Abstract_game {
   constructor(owner, tags, user_tags, FAs, container = undefined) {
-    super(owner, tags, user_tags, FAs, (container = undefined));
+    super(owner, tags, user_tags, FAs, container);
 
     this.active_card_obj = undefined;
     this.active_card_container = undefined;
@@ -473,7 +468,7 @@ class Simple_game extends Abstract_game {
 
 class Simple_score_game extends Simple_game {
   constructor(owner, tags, user_tags, FAs, container = undefined) {
-    super(owner, tags, user_tags, FAs, (container = undefined));
+    super(owner, tags, user_tags, FAs, container);
 
     this.name = "Simple score game";
     this.answer = undefined;
@@ -497,7 +492,6 @@ class Simple_score_game extends Simple_game {
         this._check_answer();
       }.bind(this);
     }
-
     return super._show_game();
   }
 
@@ -506,7 +500,7 @@ class Simple_score_game extends Simple_game {
 
     this._save_answer(this.answer, this.answer);
 
-    if (this.active_card_obj.is_front_side) this.active_card_obj.reverse();
+    this.active_card_obj.show_back_side();
     this._update_game_page(false);
   }
 
@@ -698,13 +692,7 @@ class Variants_game extends Simple_game {
     if (this.answer == right_answer) is_right = true;
     else is_right = false;
 
-    for (let i = 0; i < this.settings.number_of_variants.value; i++) {
-      let button = this.container.querySelector(`#answer_button_${i}`);
-      if (button.value == right_answer)
-        button.classList.replace("btn-primary", "btn-success");
-      if (button.value == this.answer && !is_right)
-        button.classList.replace("btn-primary", "btn-danger");
-    }
+    this._set_answer_buttons_color(right_answer);
 
     if (this._is_answered()) return;
 
@@ -712,8 +700,18 @@ class Variants_game extends Simple_game {
 
     this._save_answer(is_right, this.answer);
 
-    if (this.active_card_obj.is_front_side) this.active_card_obj.reverse();
+    this.active_card_obj.show_back_side();
     this._update_game_page(false);
+  }
+
+  _set_answer_buttons_color(right_answer) {
+    for (let i = 0; i < this.settings.number_of_variants.value; i++) {
+      let button = this.container.querySelector(`#answer_button_${i}`);
+      if (button.value == right_answer)
+        button.classList.replace("btn-primary", "btn-success");
+      else if (button.value == this.answer)
+        button.classList.replace("btn-primary", "btn-danger");
+    }
   }
 
   _on_card_reverse() {
@@ -767,7 +765,7 @@ class Print_game extends Simple_game {
 
     this._save_answer(is_right, answer.value);
 
-    if (this.active_card_obj.is_front_side) this.active_card_obj.reverse();
+    this.active_card_obj.show_back_side();
     this._update_game_page(false);
   }
 
@@ -860,21 +858,6 @@ class MetaGame extends Widget {
     this.show();
   }
 
-  _on_game_change() {
-    this._state = this.active_game.state;
-    this.settings.aggregate(this.active_game.settings);
-
-    this.show();
-
-    fetch("/Cards/save_game_settings/", {
-      method: "POST",
-      body: JSON.stringify({
-        name: "last used",
-        value: JSON.stringify(this.settings.save_to_JSON()),
-      }),
-    });
-  }
-
   show() {
     if (!super.show()) return false;
 
@@ -893,6 +876,21 @@ class MetaGame extends Widget {
       default:
         throw new Error("Unknown state");
     }
+  }
+
+  _on_game_change() {
+    this._state = this.active_game.state;
+    this.settings.aggregate(this.active_game.settings);
+
+    this.show();
+
+    fetch("/Cards/save_game_settings/", {
+      method: "POST",
+      body: JSON.stringify({
+        name: "last used",
+        value: JSON.stringify(this.settings.save_to_JSON()),
+      }),
+    });
   }
 
   _show_settings() {

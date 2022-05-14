@@ -649,29 +649,6 @@ export class Card extends Widget {
   }
 
   /**
-   * turn card to the current side
-   * @param {boolean} instantly true - do not show animation false - show animation
-   */
-  _show_side(instantly = false) {
-    let card = this.container.querySelector("#card-holder" + this.get_id());
-    if (this.is_front_side) {
-      card.className = instantly ? "rotate-instantly0" : "rotate0";
-    } else {
-      card.className = instantly ? "rotate-instantly180" : "rotate180";
-    }
-  }
-
-  /**
-   * change card side to the opposite
-   * @param {boolean} throw_event throw onReverse event or not
-   */
-  reverse(throw_event = false) {
-    this.is_front_side = !this.is_front_side;
-    this._show_side(false);
-    if (throw_event) this.onReverse?.();
-  }
-
-  /**
    * play move animation
    * @param {string} in_out 'in' or 'out'
    * @param {string} direction 'left' or 'right'
@@ -741,6 +718,43 @@ export class Card extends Widget {
    */
   get_FA_value(FA_name) {
     return this.card_data.FAs[FA_name];
+  }
+
+  /**
+   * change card side to the opposite
+   * @param {boolean} throw_event throw onReverse event or not
+   */
+  reverse(throw_event = false) {
+    this.is_front_side = !this.is_front_side;
+    this._show_side(false);
+    if (throw_event) this.onReverse?.();
+  }
+
+  show_front_side() {
+    if (!this.is_front_side) {
+      this.is_front_side = true;
+      this._show_side(false);
+    }
+  }
+
+  show_back_side() {
+    if (this.is_front_side) {
+      this.is_front_side = false;
+      this._show_side(false);
+    }
+  }
+
+  /**
+   * turn card to the current side
+   * @param {boolean} instantly true - do not show animation false - show animation
+   */
+  _show_side(instantly = false) {
+    let card = this.container.querySelector("#card-holder" + this.get_id());
+    if (this.is_front_side) {
+      card.className = instantly ? "rotate-instantly0" : "rotate0";
+    } else {
+      card.className = instantly ? "rotate-instantly180" : "rotate180";
+    }
   }
 
   _tag_onclick(event) {
@@ -1335,7 +1349,9 @@ export class Tag_selector_set extends Setting {
     this.show();
   }
 }
-
+/**
+ *
+ */
 export class Settings extends Widget {
   /**
    * @constructor
@@ -1345,30 +1361,40 @@ export class Settings extends Widget {
   constructor(owner, container = undefined) {
     super(owner, container);
     this._settings = [];
-    //this.do_not_load = []
   }
 
+  /**
+   *
+   * @param {Setting} new_settings
+   */
   aggregate(new_settings) {
     for (let i = 0; i < new_settings._settings.length; i++) {
       let setting = new_settings._settings[i];
-      //if (!new_settings.do_not_load.includes(setting.name))
       this.add_setting(setting, setting.name);
     }
   }
 
+  /**
+   *
+   * @param {Setting} new_settings
+   */
   load(new_settings) {
     for (let i = 0; i < this._settings.length; i++) {
       let setting = this._settings[i];
       if (
         Object.keys(new_settings).includes(setting.name) &&
         new_settings[setting.name] instanceof Setting
-        //&& !this.do_not_load.includes(setting.name)
       ) {
         setting.value = new_settings[setting.name].get_user_value();
       }
     }
   }
 
+  /**
+   *
+   * @param {Setting} setting
+   * @param {string} name
+   */
   add_setting(setting, name) {
     const index = this._settings.indexOf(setting);
     if (index > -1) this._settings[index] = setting;
@@ -1378,6 +1404,10 @@ export class Settings extends Widget {
     setting.set_name(name);
   }
 
+  /**
+   *
+   * @param {Setting} setting
+   */
   delete_setting(setting) {
     const index = this._settings.indexOf(setting);
     if (index > -1) {
@@ -1385,6 +1415,11 @@ export class Settings extends Widget {
     }
   }
 
+  /**
+   *
+   * @param {Setting} setting
+   * @param {Setting} before_setting
+   */
   insert_before(setting, before_setting) {
     const index = this._settings.indexOf(before_setting);
     if (index > -1) {

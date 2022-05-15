@@ -129,6 +129,7 @@ class Abstract_game extends Widget {
   _show_game() {
     fetch("/Cards/get_cards", {
       method: "POST",
+      headers: { "X-CSRFToken": window.GLOBAL_CSRF_TOKEN },
       body: JSON.stringify({
         tag_filter: this.settings.tag_selectors_set.value,
       }),
@@ -218,6 +219,7 @@ class Abstract_game extends Widget {
   _update_settings_page() {
     fetch("/Cards/get_cards_count", {
       method: "POST",
+      headers: { "X-CSRFToken": window.GLOBAL_CSRF_TOKEN },
       body: JSON.stringify({
         tag_filter: this.settings.tag_selectors_set.value,
       }),
@@ -580,6 +582,7 @@ class Variants_game extends Simple_game {
 
     fetch("/Cards/get_cards", {
       method: "POST",
+      headers: { "X-CSRFToken": window.GLOBAL_CSRF_TOKEN },
       body: JSON.stringify({
         tag_filter: this.settings.variants_tag_selector.value,
       }),
@@ -803,6 +806,7 @@ class MetaGame extends Widget {
 
     fetch("/Cards/get_metadata", {
       method: "POST",
+      headers: { "X-CSRFToken": window.GLOBAL_CSRF_TOKEN },
       body: JSON.stringify({}),
     })
       .then((response) => response.json())
@@ -836,6 +840,7 @@ class MetaGame extends Widget {
         this.active_game = this.games[0];
         fetch("/Cards/get_game_settings/", {
           method: "POST",
+          headers: { "X-CSRFToken": window.GLOBAL_CSRF_TOKEN },
           body: JSON.stringify({ name: "last used" }),
         })
           .then((response) => response.json())
@@ -844,6 +849,7 @@ class MetaGame extends Widget {
               this.settings.load_from_JSON(JSON.parse(result.settings));
             } catch (error) {
               //ignore or errors if something went wrong in loading new settings
+              console.log("something went wrong in loading new settings");
             }
 
             this.active_game.settings.load(this.settings);
@@ -886,6 +892,7 @@ class MetaGame extends Widget {
 
     fetch("/Cards/save_game_settings/", {
       method: "POST",
+      headers: { "X-CSRFToken": window.GLOBAL_CSRF_TOKEN },
       body: JSON.stringify({
         name: "last used",
         value: JSON.stringify(this.settings.save_to_JSON()),

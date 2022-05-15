@@ -32,8 +32,9 @@
 
 {% block title %} Search {% endblock %}
 {% block content %}
-{% csrf_token %}
+
 <form class="form-row align-items-center" method="post">
+    {% csrf_token %}
     <div class="col-auto">
         <input id="search" placeholder="Enter search query" class="form-control mb-2" type="text" name="search" required
             autofocus value="{{search}}" onfocus="const temp_value=this.value; this.value=''; this.value=temp_value">

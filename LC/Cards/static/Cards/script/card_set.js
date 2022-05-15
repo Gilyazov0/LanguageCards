@@ -87,7 +87,6 @@ export class Saveable {
    * @param {JSON} objectJSON
    */
   load_from_JSON(objectJSON) {
-    console.log(this);
     for (let key in objectJSON) {
       this._load_attribute_to_JSON(key, objectJSON);
     }
@@ -763,8 +762,8 @@ export class Card extends Widget {
 
     fetch("/Cards/delete_card_tag", {
       method: "POST",
+      headers: { "X-CSRFToken": window.GLOBAL_CSRF_TOKEN },
       body: JSON.stringify({ tag_id: tag_id, card_id: card.get_id() }),
-      headers: { "X-CSRFToken": card.CSRF_TOKEN },
     })
       .then((response) => response.json())
       .then((result) => {
@@ -780,8 +779,8 @@ export class Card extends Widget {
 
     fetch("/Cards/set_card_tag", {
       method: "POST",
+      headers: { "X-CSRFToken": window.GLOBAL_CSRF_TOKEN },
       body: JSON.stringify({ tag_id: tag_id, card_id: card.get_id() }),
-      headers: { "X-CSRFToken": card.CSRF_TOKEN },
     })
       .then((response) => response.json())
       .then((result) => {
@@ -1036,11 +1035,6 @@ export class Setting extends Widget {
     if (!this.visible) return false;
     if (!super.show()) return false;
     return true;
-  }
-
-  load_from_JSON(objectJSON) {
-    super.load_from_JSON(objectJSON);
-    this._Throw_load_event({ event_name: "load_from_JSON" });
   }
 
   save_to_JSON() {

@@ -3,11 +3,12 @@
 {% block script %}     
 {% if cards_count %}
 <script type="module" src="{% static 'Cards/script/card_set.js' %}"></script>
-
 <script type="module">    
     import {Card, Card_set} from "{% static 'Cards/script/card_set.js' %}";
   
     document.addEventListener('DOMContentLoaded', function () {
+        console.log(window.GLOBAL_CSRF_TOKEN)
+
         const element = document.querySelector('#data');         
 
         let obj = JSON.parse(element.getAttribute('card_set_data'))

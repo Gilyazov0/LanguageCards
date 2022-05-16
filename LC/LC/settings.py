@@ -14,7 +14,7 @@ from pathlib import Path
 import os
 import environ
 
-env = environ.Env()
+env = environ.Env(DEBUG=(bool, False))
 environ.Env.read_env()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -25,12 +25,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/3.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'l33lu-gh&_9at8as*epr=8obj1779s3%40$k(wkwpbf8*r0+9j'
+SECRET_KEY = env('ENV_SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = env('DEBUG')
 
-ALLOWED_HOSTS = ["localhost","*"]
+ALLOWED_HOSTS = ["localhost", "*"]
 
 
 # Application definition
@@ -44,8 +44,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'crispy_forms',
-    
-      
+
+
 ]
 
 AUTH_USER_MODEL = 'Cards.User'
@@ -60,7 +60,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    
+
 ]
 
 ROOT_URLCONF = 'LC.urls'
@@ -84,27 +84,17 @@ TEMPLATES = [
 WSGI_APPLICATION = 'LC.wsgi.application'
 
 
-# Database
-# https://docs.djangoproject.com/en/3.1/ref/settings/#databases
-
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.sqlite3',
-#         'NAME': BASE_DIR / 'db.sqlite3',
-#     }
-# }
-
 DATABASES = {
-     'default': {
-'ENGINE': env('ENV_ENGINE'),
-'NAME': env('ENV_NAME'),
-'USER' : env('ENV_USER'),
-'PASSWORD' : env('ENV_PASSWORD'),
-'HOST' : env('ENV_HOST'),
-'PORT' : env('ENV_PORT'),
-     }
+    'default': {
+        'ENGINE': env('ENV_ENGINE'),
+        'NAME': env('ENV_NAME'),
+        'USER': env('ENV_USER'),
+        'PASSWORD': env('ENV_PASSWORD'),
+        'HOST': env('ENV_HOST'),
+        'PORT': env('ENV_PORT'),
+    }
 }
- 
+
 
 # Password validation
 # https://docs.djangoproject.com/en/3.1/ref/settings/#auth-password-validators
@@ -148,5 +138,5 @@ PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
 STATIC_ROOT = os.path.join(PROJECT_ROOT, 'static')
 
 STATICFILES_DIRS = [
-   os.path.join(BASE_DIR, "static"),
+    os.path.join(BASE_DIR, "static"),
 ]

@@ -71,6 +71,7 @@ def get_metadata(request):
               'FAs': [FA.serialize()]
               }
     """
+
     result = Tag.objects.get_tags_dict(request.user)
     result['FAs'] = [FA.serialize() for FA in Face_attribute.objects.all()]
 

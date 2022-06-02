@@ -1,7 +1,6 @@
 import json
 from django.test import TestCase
 from ..models import Face_attribute, FA_value, Card, Tag, User, Game_Settings
-import json
 
 
 class ApiTest(TestCase):

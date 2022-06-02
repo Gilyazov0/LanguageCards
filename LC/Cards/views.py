@@ -68,7 +68,7 @@ def create_tag(request):
         request (HttpRequest):
 
     Returns:
-        HttpResponseRedirect: rederect to user profile
+        HttpResponseRedirect: redirect to user profile
     """
     if request.method == "POST" and request.user.is_authenticated:
         user_tag_name = request.POST['user_tag']
@@ -89,7 +89,7 @@ def delete_tag(request):
         request (HttpRequest):
 
     Returns:
-        HttpResponseRedirect: rederect to user profile
+        HttpResponseRedirect: redirect to user profile
     """
     if request.method == "POST" and request.user.is_authenticated:
         tag_id = int(request.POST['tag_id'])
@@ -120,7 +120,7 @@ def profile(request):
 
 def game(request):
     """
-    rander game page
+    randers game page
 
     Args:
         request (HttpRequest):

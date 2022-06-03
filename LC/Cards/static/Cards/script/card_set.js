@@ -1044,6 +1044,8 @@ export class Setting extends Widget {
 
     return result;
   }
+
+  clear_empty_setting() {}
 }
 
 export class LabelSetting extends Setting {
@@ -1283,26 +1285,13 @@ export class Tag_selector_set extends Setting {
     return result;
   }
 
-  /**
-   * @returns return settings(internal state) in serializable structure
-   */
-
-  get_settings() {
-    return { selected_tags: this.get_selected_tags() };
-  }
-  /**
-   *restore previously saved state. inverse of get_settings()
-   * @param {*} settings
-   */
-  set_settings(settings) {
-    this.tag_selectors = [];
-    const selected_tags = settings["selected_tags"];
-    if (selected_tags == undefined) this.add_tag_selectors_pair();
-    else {
-      for (let i = 0; i < selected_tags.length; i++) {
-        let ts_pair = this.add_tag_selectors_pair();
-        ts_pair["include"].selected_tags = selected_tags[i]["include"];
-        ts_pair["exclude"].selected_tags = selected_tags[i]["exclude"];
+  clear_empty_setting() {
+    for (let i = this.tag_selectors.length - 1; i > 0; i--) {
+      if (
+        this.tag_selectors[i]["include"].selected_tags.length == 0 &&
+        this.tag_selectors[i]["exclude"].selected_tags.length == 0
+      ) {
+        this.tag_selectors.splice(i, 1);
       }
     }
   }
@@ -1364,6 +1353,7 @@ export class Settings extends Widget {
   aggregate(new_settings) {
     for (let i = 0; i < new_settings._settings.length; i++) {
       let setting = new_settings._settings[i];
+      setting.clear_empty_setting();
       this.add_setting(setting, setting.name);
     }
   }

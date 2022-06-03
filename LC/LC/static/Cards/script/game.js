@@ -886,6 +886,7 @@ class MetaGame extends Widget {
 
   _on_game_change() {
     this._state = this.active_game.state;
+
     this.settings.aggregate(this.active_game.settings);
 
     this.show();
